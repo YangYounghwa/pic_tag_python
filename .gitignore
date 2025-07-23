@@ -1,5 +1,6 @@
 .venv
-data/
+data/db/*
+data/images/*
 *.db
 *.sqlite3
 .pytest_cache/
