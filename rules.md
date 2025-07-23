@@ -9,4 +9,10 @@
 
 main.py에서 cropper, dashboard, cleanup_cron, feature_extractor를 하나하나씩 호출하여 사용합니다.
 
+db는 /data/db/table.db
+
+img는 /data/img/*.png
+형태로 들어갑니다.
+
+
 
