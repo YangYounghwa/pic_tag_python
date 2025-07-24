@@ -33,12 +33,14 @@ class IdentityEngine(threading.Thread):
     def run(self):
         while self.running:
             try:
-                feature_data= self.queue.get(timeout=1.0)
+                feature_data= self.queue.get(timeout=0.1)  # Adjust timeout as needed
+                if not feature_data:
+                    continue
+                
+                #debug line
+                print(f"[{time.strftime('%H:%M:%S')}] Processing feature data: {feature_data}" )
                 embedding = feature_data["features"]
                 timestamp = feature_data["timeStamp"]
-                # bounding_box = feature_data["bounding_box"]
-                # file_path = feature_data["img_name"]
-                # camera_id = feature_data["camera_id"]
                 bounding_box = feature_data["bounding_box"]
                 file_path = feature_data["img_name"]
                 camera_id = feature_data["camera_id"]  
