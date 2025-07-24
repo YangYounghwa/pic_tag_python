@@ -10,9 +10,6 @@ from .grouper import IdentityEngine
 import queue as Queue
 from .grouper.id_logger import IdentityLogger
 
-frame_queue = Queue.Queue()
-feature_queue = Queue.Queue()
-
 
 
 def start_all_cameras():
@@ -20,7 +17,10 @@ def start_all_cameras():
    
     base_dir = os.path.dirname(os.path.abspath(__file__))
     logger = IdentityLogger(os.path.join(base_dir, r"..\..\data\db\identity_log.db"))
-    
+    frame_queue = Queue.Queue()
+    feature_queue = Queue.Queue()
+
+ 
     
     feature_extractor_thread = threading.Thread(target=extract_features,args=(frame_queue, feature_queue,))
     feature_extractor_thread.start()

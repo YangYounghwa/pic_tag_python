@@ -166,8 +166,10 @@ def capture_frames(cam_num,frame_queue): # rtsp_url 인자를 제거
                 "camera_id": cam_num,
                 "img_name": img_name_for_frame,
             }
+            # Debug line to show the number of detected persons
+            # print(f"[{timestamp_str}] Frame {frame_count} processed, detected {len(detected_person_bboxes_for_queue)} persons.")
             frame_queue.put(data_transfer)
-
+            frame_queue.task_done()  # Notify that the task is done
 
         # --- 미리보기 및 종료 조건 ---
         cv2.imshow('Live Preview with YOLO Tracking (Press "q" to stop)', annotated_frame)
