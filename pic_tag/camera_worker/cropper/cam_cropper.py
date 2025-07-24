@@ -3,11 +3,17 @@ import time
 import os
 from ultralytics import YOLO
 import datetime
+import queue
 # from pic_tag.camera_worker import frame_queue
 
 
 # --- 모든 저장 이미지를 위한 전역 순차 번호 카운터 ---
 global_image_sequence_counter = 0
+
+# --- 큐 객체 생성 (이 큐를 통해 데이터를 전달할 것입니다) ---
+# 이 큐는 메인 스레드와 capture_frames 스레드 간의 통신에 사용됩니다.
+frame_data_queue = queue.Queue(maxsize=10) # 큐 사이즈를 제한하여 메모리 과부하 방지
+
 
 
 def model_load(model_name="yolov8n.pt"):
@@ -39,7 +45,7 @@ def draw_bounding_box(
     return image
 
 
-def capture_frames(cam_num,frame_queue): # rtsp_url 인자를 제거
+def capture_frames(cam_num, frame_data_queue_instance, web_link=None): # rtsp_url 인자를 제거
     global global_image_sequence_counter
 
     main_detected_images_folder = "detected_images"
@@ -90,10 +96,7 @@ def capture_frames(cam_num,frame_queue): # rtsp_url 인자를 제거
             break
 
         current_time = datetime.datetime.now()
-        # timestamp_str = current_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-        
-        timestamp_str  = current_time.strftime('%Y-%m-%d %H:%M:%S') # SQL timestamp format
-        
+        timestamp_str = current_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         img_name_for_frame = f"frame_{current_time.strftime('%Y%m%d_%H%M%S_%f')[:-3]}.jpg"
 
         # --- 객체 탐지 및 트래킹 ---
@@ -166,7 +169,9 @@ def capture_frames(cam_num,frame_queue): # rtsp_url 인자를 제거
                 "camera_id": cam_num,
                 "img_name": img_name_for_frame,
             }
-            frame_queue.put(data_transfer)
+
+            frame_data_queue_instance.put(data_transfer) # 올바른 큐 인스턴스 사용
+
 
 
         # --- 미리보기 및 종료 조건 ---
@@ -187,4 +192,5 @@ def capture_frames(cam_num,frame_queue): # rtsp_url 인자를 제거
 
 # --- 함수 호출 예시 (웹캠 사용) ---
 if __name__ == "__main__":
-    capture_frames(cam_num=1)
+    my_frame_queue = queue.Queue(maxsize=10)
+    capture_frames(cam_num=0, frame_data_queue_instance=my_frame_queue)
