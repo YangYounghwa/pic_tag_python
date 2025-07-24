@@ -1,2 +1,2 @@
-from pic_tag.camera_worker.grouper import IdentityEngine
-from pic_tag.camera_worker.shared_queue import feature_queue
+from .identity_engine import IdentityEngine
+from .id_logger import IdentityLogger

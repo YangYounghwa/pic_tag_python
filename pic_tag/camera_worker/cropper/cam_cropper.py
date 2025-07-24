@@ -90,7 +90,10 @@ def capture_frames(cam_num,frame_queue): # rtsp_url 인자를 제거
             break
 
         current_time = datetime.datetime.now()
-        timestamp_str = current_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        # timestamp_str = current_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        
+        timestamp_str  = current_time.strftime('%Y-%m-%d %H:%M:%S') # SQL timestamp format
+        
         img_name_for_frame = f"frame_{current_time.strftime('%Y%m%d_%H%M%S_%f')[:-3]}.jpg"
 
         # --- 객체 탐지 및 트래킹 ---
