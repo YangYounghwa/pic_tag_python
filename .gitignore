@@ -10,3 +10,4 @@ __pycache__/
 *.pyd
 *.log
 detected_images/
+*.pt
