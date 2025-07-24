@@ -3,14 +3,7 @@ import time
 import os
 from ultralytics import YOLO
 import datetime
-# from pic_tag.camera_worker import frame_queue
-
-# 테스트를 위해 임시로 frame_queue를 정의합니다. 실제 코드에서는 위의 줄을 사용하세요.
-class FrameQueue:
-    def put(self, data):
-        # print(f"Data put into queue: {data['timeStamp']}")
-        pass # 실제 큐 로직이 여기에 들어갑니다.
-frame_queue = FrameQueue()
+from pic_tag.camera_worker import frame_queue
 
 
 # --- 모든 저장 이미지를 위한 전역 순차 번호 카운터 ---
@@ -160,11 +153,6 @@ def capture_frames(cam_num): # rtsp_url 인자를 제거
                             except Exception as e:
                                 print(f"Error saving image {image_filepath}: {e}")
                         
-                        # 중요: 여기에 `is_this_a_saving_frame = False`를 두지 않습니다.
-                        # 그렇게 하면 이 프레임에서 첫 번째로 감지된 사람의 이미지만 저장되고,
-                        # 동일 프레임 내의 다른 사람은 저장되지 않습니다.
-                        # 요청은 '트래킹된 사람 별로' 나뉘는 것이므로,
-                        # 저장 주기가 되었을 때 '각 사람'을 저장해야 합니다.
 
         # --- 큐에 데이터 전송 ---
         if detected_person_bboxes_for_queue:
