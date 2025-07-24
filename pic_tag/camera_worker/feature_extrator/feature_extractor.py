@@ -25,7 +25,10 @@ def extract_features(feature_queue, frame_queue):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
     device = torch.device("cpu")
-    model3 = torch.load(os.path.join(base_dir, "reid_model_full_v0.1.pth"), map_location=device,weights_only=False)
+    
+    model3 = YOLOv11ReID()
+    model3.load_state_dict(torch.load(os.path.join(base_dir, "reid_model_state_dictv2.0.pth"), map_location=device))
+
     model3.eval()
     model3.to(device)
 
