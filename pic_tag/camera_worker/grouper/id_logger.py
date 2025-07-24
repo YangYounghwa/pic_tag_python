@@ -14,6 +14,8 @@ class IdentityLogger:
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     person_id INTEGER NOT NULL,
                     embedding TEXT NOT NULL,
+                    file_path TEXT,
+                    camera_id INTEGER,
                     bb_x1 INTEGER,
                     bb_y1 INTEGER,
                     bb_x2 INTEGER,
@@ -21,12 +23,12 @@ class IdentityLogger:
                 )
             ''')
 
-    def log(self, timestamp, person_id, embedding, bounding_box):
+    def log(self, timestamp, person_id, embedding, bounding_box, file_path, camera_id):
         emb_str = ",".join(f"{x:.6f}" for x in embedding.tolist())
         with self.conn:
             self.conn.execute(
-                "INSERT INTO identity_log (timestamp, person_id, embedding, bb_x1, bb_y1, bb_x2, bb_y2) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (timestamp, person_id, emb_str, *bounding_box)
+                "INSERT INTO identity_log (timestamp, person_id, embedding, file_path, camera_id, bb_x1, bb_y1, bb_x2, bb_y2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (timestamp, person_id, emb_str, file_path, camera_id, *bounding_box)
             )
 
     def close(self):
