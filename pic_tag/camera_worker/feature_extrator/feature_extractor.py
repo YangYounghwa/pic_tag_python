@@ -1,10 +1,11 @@
 
 
 
-import queue
 from time import sleep
 import os
 import glob
+import xml.etree.ElementTree as ET
+import time
 import xml.etree.ElementTree as ET
 
 
@@ -17,10 +18,9 @@ from torchvision import transforms
 from ultralytics import YOLO
 
 from .ReID_modelv2 import YOLOv11ReID
-
 import random
 import numpy as np
-
+import time
 import time
 
 

@@ -33,11 +33,11 @@ class IdentityEngine(threading.Thread):
     def run(self):
         while self.running:
             try:
-                feature_data= self.queue.get(timeout=0.1)  # Adjust timeout as needed
+                feature_data = self.queue.get(timeout=0.1)  # Adjust timeout as needed
                 if not feature_data:
                     continue
                 
-                #debug line
+                # Debug line
                 print(f"[{time.strftime('%H:%M:%S')}] Processing feature data: {feature_data}" )
                 embedding = feature_data["features"]
                 timestamp = feature_data["timeStamp"]
