@@ -1,6 +1,6 @@
 
 
-
+import os
 from ast import arg
 import sqlite3
 import threading
@@ -18,8 +18,10 @@ feature_queue = Queue.Queue()
 def start_all_cameras():
     # Connect to the SQLite database to retrieve camera configurations in real production
    
-   
-    logger = IdentityLogger("identity_log.db") 
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    logger = IdentityLogger(os.path.join(base_dir, r"..\..\data\db\identity_log.db"))
+    
+    
     feature_extractor_thread = threading.Thread(target=extract_features,args=(frame_queue, feature_queue,))
     feature_extractor_thread.start()
     engine = IdentityEngine(feature_queue, sim_threshold=0.2,logger=logger, max_history=20000, max_age_sec=86400)
