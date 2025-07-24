@@ -20,6 +20,8 @@ from .ReID_modelv2 import YOLOv11ReID
 import random
 import numpy as np
 
+import time
+
 
 def extract_features(feature_queue, frame_queue):
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -40,6 +42,8 @@ def extract_features(feature_queue, frame_queue):
         if frame_data is None:
             sleep(0.1)
             continue  # Skip if no frame data is available
+        # Debug line to show which frame is being processed
+        print(f"[{time.strftime('%H:%M:%S')}] Extracting features from frame: {frame_data['img_name']}")
         image = frame_data["img"]
         box = frame_data["bounding_box"]
         timestamp = frame_data["timeStamp"]
