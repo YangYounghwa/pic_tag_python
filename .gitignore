@@ -11,3 +11,4 @@ __pycache__/
 *.log
 detected_images/
 *.pt
+.DS_Store
