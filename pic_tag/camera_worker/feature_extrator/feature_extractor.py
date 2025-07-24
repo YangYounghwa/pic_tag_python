@@ -2,7 +2,6 @@
 from pic_tag.camera_worker import frame_queue
 
 
-
 import os
 import glob
 import xml.etree.ElementTree as ET
@@ -14,7 +13,9 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision.ops import RoIAlign
 from torchvision import transforms
+from ultralytics import YOLO
 
+from pic_tag.camera_worker.feature_extrator.ReID_model import YOLOv11ReID
 
 import random
 import numpy as np
@@ -38,52 +39,15 @@ def extract_features():
         cam_id = frame_data["camera_id"]
         img_name = frame_data["img_name"]
         features = model3(image)
-        
-        
-        
-        
-        
-        
-        
-        
-        
-class YOLOv11ReID(nn.Module):
-    def __init__(self, yolo_weights='yolo11n.pt', emb_dim=128):
-        super().__init__()
-        yolo_model = YOLO(yolo_weights)
-
-
-        self.backbone = nn.Sequential(
-          yolo_model.model.model[0],
-          yolo_model.model.model[1],
-          yolo_model.model.model[2],
-          yolo_model.model.model[3],
-          yolo_model.model.model[4],
-          yolo_model.model.model[5],
-          yolo_model.model.model[6],
-          yolo_model.model.model[7],
-          )
-
-        
-        self.pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(self._get_feat_dim(), emb_dim)
-
-    def _get_feat_dim(self):
-        x = torch.zeros((1, 3, 256, 128))
-        with torch.no_grad():
-            f = self.backbone(x)
-
-            
-            # f = self.pool(f).flatten(1)
-            return f.shape[1]
-
-    def forward(self, x):
-        x = self.backbone(x)
-
-
-        
-
-        f = self.pool(x).flatten(1)
-        pooled = self.pool(x).flatten(1)  # ✅ apply once
-        emb = self.fc(pooled)
-        return nn.functional.normalize(emb, dim=1)
+        features = features.cpu().numpy()
+        features = features.flatten()
+        feature_data = {
+            "features": features,
+            "bounding_box": box,
+            "timeStamp": timestamp,
+            "camera_id": cam_id,
+            "img_name": img_name
+        }
+        feature_queue.put(feature_data)
+        # Mark the task as done
+        frame_queue.task_done()

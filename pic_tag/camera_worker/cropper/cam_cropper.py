@@ -3,7 +3,7 @@ import time
 import os
 from ultralytics import YOLO
 import datetime
-from pic_tag.camera_worker import frame_queue
+# from pic_tag.camera_worker import frame_queue
 
 
 # --- 모든 저장 이미지를 위한 전역 순차 번호 카운터 ---
@@ -39,7 +39,7 @@ def draw_bounding_box(
     return image
 
 
-def capture_frames(cam_num): # rtsp_url 인자를 제거
+def capture_frames(cam_num,frame_queue): # rtsp_url 인자를 제거
     global global_image_sequence_counter
 
     main_detected_images_folder = "detected_images"
