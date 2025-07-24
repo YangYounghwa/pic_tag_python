@@ -1,7 +1,7 @@
 
-from pic_tag.camera_worker import frame_queue
 
 
+from time import sleep
 import os
 import glob
 import xml.etree.ElementTree as ET
@@ -15,15 +15,15 @@ from torchvision.ops import RoIAlign
 from torchvision import transforms
 from ultralytics import YOLO
 
-from pic_tag.camera_worker.feature_extrator.ReID_model import YOLOv11ReID
+from .ReID_model import YOLOv11ReID
 
 import random
 import numpy as np
 
 
-def extract_features():
-    
-    model3 = torch.load(r"pic_tag\camera_worker\feature_extrator\reid_model_full_v0.1.pth",map_location=torch.device('cpu'))
+def extract_features(feature_queue, frame_queue):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    model3 = torch.load(os.path.join(base_dir, "reid_model_full_v0.1.pth"), map_location=torch.device('cpu'),weights_only=False)
     model3.eval()
     device = torch.device("cpu")
     model3.to(device)
@@ -33,6 +33,9 @@ def extract_features():
     while True:
         # Get a frame from the queue
         frame_data = frame_queue.get()
+        if frame_data is None:
+            sleep(0.1)
+            continue  # Skip if no frame data is available
         image = frame_data["img"]
         box = frame_data["bounding_box"]
         timestamp = frame_data["timeStamp"]

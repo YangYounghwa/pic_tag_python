@@ -1,8 +1,8 @@
-from pic_tag import camera_manger
+from camera_worker import start_all_cameras
 
 
 def main():
-    camera_manger.start_all_cameras()
+    start_all_cameras()
 
 if __name__ == "__main__":
     main()
