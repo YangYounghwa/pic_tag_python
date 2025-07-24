@@ -1,6 +1,7 @@
 
 
 
+import queue
 from time import sleep
 import os
 import glob
@@ -23,7 +24,11 @@ import numpy as np
 import time
 
 
-def extract_features(feature_queue, frame_queue):
+def extract_features(frame_queue,feature_queue ):
+    
+    print("Starting feature extraction thread...")  
+    
+    # Load the YOLOv11 ReID model
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
     device = torch.device("cpu")
@@ -33,13 +38,22 @@ def extract_features(feature_queue, frame_queue):
 
     model3.eval()
     model3.to(device)
+   
+    # Debug line to confirm model loading
+    print(f"Feature extraction model loaded and ready on {device}.")
 
     
     
     while True:
         # Get a frame from the queue
-        frame_data = frame_queue.get()
+        try:
+            frame_data = frame_queue.get(timeout=0.2)
+        except queue.Empty as e:
+            # print("Frame queue is empty, exiting feature extraction.")
+            continue
+
         if frame_data is None:
+            # print("No more frames to process, exiting feature extraction.")
             sleep(0.1)
             continue  # Skip if no frame data is available
         # Debug line to show which frame is being processed
