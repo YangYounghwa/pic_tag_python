@@ -11,3 +11,5 @@ __pycache__/
 *.log
 detected_images/
 *.pt
+*debug.ipynb
+*.ipynb_checkpoints
