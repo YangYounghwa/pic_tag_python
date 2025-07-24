@@ -20,12 +20,39 @@ class IdentityEngine(threading.Thread):
         self.person_counter = 0
         self.lock = threading.Lock()
         self.running = True
+        
+        # feature_data = {
+        #     "features": features,
+        #     "bounding_box": box,
+        #     "timeStamp": timestamp,
+        #     "camera_id": cam_id,
+        #     "img_name": img_name
+        # }
+        # feature_queue.put(feature_data)
 
     def run(self):
         while self.running:
             try:
-                timestamp, embedding = self.queue.get(timeout=1.0)
-                person_id = self._assign_identity(timestamp, embedding)
+                feature_data= self.queue.get(timeout=1.0)
+                embedding = feature_data["features"]
+                timestamp = feature_data["timeStamp"]
+                # bounding_box = feature_data["bounding_box"]
+                # file_path = feature_data["img_name"]
+                # camera_id = feature_data["camera_id"]
+                bounding_box = feature_data["bounding_box"]
+                file_path = feature_data["img_name"]
+                camera_id = feature_data["camera_id"]  
+                embedding = np.array(embedding, dtype=np.float32)
+                if embedding.ndim == 1: 
+                    embedding = embedding.reshape(1, -1)
+                if embedding.shape[0] > 1:
+                    embedding = embedding.mean(axis=0, keepdims=True)
+                embedding = embedding.flatten()
+                if embedding.size == 0:
+                    print(f"[{time.strftime('%H:%M:%S')}] Empty embedding received, skipping.")
+                    self.queue.task_done()
+                    continue 
+                person_id = self._assign_identity(timestamp, embedding, bounding_box, file_path, camera_id)
                 print(f"[{time.strftime('%H:%M:%S')}] Assigned ID {person_id}")
                 self.queue.task_done()
             except Empty:
@@ -35,7 +62,7 @@ class IdentityEngine(threading.Thread):
     def stop(self):
         self.running = False
 
-    def _assign_identity(self, timestamp, embedding: np.ndarray):
+    def _assign_identity(self, timestamp, embedding: np.ndarray, bounding_box, file_path, camera_id = None):
         embedding = embedding.astype(np.float32)
         with self.lock:
             self._clean_old_entries(timestamp)
@@ -57,7 +84,10 @@ class IdentityEngine(threading.Thread):
                 if len(self.recent_data) > self.max_history:
                     self.recent_data.popleft()
                 if self.logger:
-                    self.logger.log(timestamp, best_pid, embedding)
+                # "INSERT INTO identity_log (timestamp, person_id, embedding, file_path, camera_id, bb_x1, bb_y1, bb_x2, bb_y2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                # (timestamp, person_id, emb_str, file_path, camera_id, *bounding_box)
+                    self.logger.log(timestamp, best_pid, embedding, bounding_box, file_path, camera_id)
+                # log(self, timestamp, person_id, embedding, bounding_box, file_path, camera_id)
                 return best_pid
             else:
                 return self._create_new_identity(embedding, timestamp)
