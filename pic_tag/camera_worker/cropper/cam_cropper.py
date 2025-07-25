@@ -6,14 +6,16 @@ import datetime
 import queue
 import threading
 
+from pathlib import Path
+
 # --- 모든 저장 이미지를 위한 전역 순차 번호 카운터 ---
 global_image_sequence_counter = 0
 
 # --- 큐 객체 생성 ---
 # 1. 탐지된 사람 정보(DB 스키마)를 위한 큐
-person_data_queue = queue.Queue(maxsize=10) 
+# person_data_queue = queue.Queue(maxsize=10) 
 # 2. 화면 표시(imshow)를 위한 프레임 큐 (가장 최신 프레임만 유지)
-display_frame_queue = queue.Queue(maxsize=2) 
+# display_frame_queue = queue.Queue(maxsize=2) 
 
 
 def model_load(model_name):
@@ -45,14 +47,18 @@ def draw_bounding_box(
     )
     return image
 
-
-def capture_frames(cam_num, person_data_queue_instance, display_frame_queue_instance, web_link=None):
+def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path = None, web_link=None):
     global global_image_sequence_counter
 
-    main_data_folder = "data"
+    if destination_folder is None:
+        destination_folder = Path("../data")
+    main_data_folder = destination_folder
+    if not main_data_folder.exists():
+        print(f"Destination folder {main_data_folder} does not exist. Creating it.")
+        main_data_folder.mkdir(parents=True, exist_ok=True)
     sub_data_folder = "img"
     main_data_folder_path = main_data_folder
-    sub_data_folder_path = os.path.join(main_data_folder, sub_data_folder)
+    sub_data_folder_path = main_data_folder / sub_data_folder
     make_folder(main_data_folder_path)
     make_folder(sub_data_folder_path)
 
@@ -99,7 +105,8 @@ def capture_frames(cam_num, person_data_queue_instance, display_frame_queue_inst
             break
 
         current_time_dt = datetime.datetime.now()
-        timestamp_str = current_time_dt.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        timestamp=current_time_dt  
+        #timestamp_str = current_time_dt.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
         # --- 객체 탐지 및 트래킹 ---
         results = model.track(
@@ -165,9 +172,8 @@ def capture_frames(cam_num, person_data_queue_instance, display_frame_queue_inst
                                 image_filepath = None
 
                         person_detection_data = {
-                            "timestamp": timestamp_str,
+                            "timestamp": timestamp,
                             "person_id": track_id,
-                            "embedding": None,
                             "file_path": image_filepath,
                             "cropped_image_rgb": cropped_image_rgb, # <--- 추가: RGB 이미지 데이터
                             "camera_id": cam_num,
@@ -181,18 +187,9 @@ def capture_frames(cam_num, person_data_queue_instance, display_frame_queue_inst
                         try:
                             person_data_queue_instance.put(person_detection_data, block=False)
                         except queue.Full:
-                            print(f"Person data queue full, skipping data for person ID {track_id} at {timestamp_str}")
+                            print(f"Person data queue full, skipping data for person ID {track_id} at {timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}")
 
         
-        # --- 어노테이션된 프레임을 디스플레이 큐에 넣기 ---
-        try:
-            while display_frame_queue_instance.qsize() >= display_frame_queue_instance.maxsize:
-                display_frame_queue_instance.get_nowait()
-            display_frame_queue_instance.put_nowait(annotated_frame)
-        except queue.Full:
-            pass
-        except queue.Empty:
-            pass
 
 
     # --- 루프 종료 후 자원 해제 ---
@@ -201,70 +198,4 @@ def capture_frames(cam_num, person_data_queue_instance, display_frame_queue_inst
     return {"status": "completed", "total_frames": frame_count, "camera_id": cam_num}
 
 
-# --- 메인 실행 블록 ---
-if __name__ == "__main__":
-    
-    # capture_frames 함수를 별도의 스레드에서 실행
-    capture_thread = threading.Thread(
-        target=capture_frames, 
-        args=(0, person_data_queue, display_frame_queue)
-    )
-    capture_thread.daemon = True 
-    capture_thread.start()
 
-    print("Capture thread started. Main thread can now perform other tasks (e.g., consume from queue and display frames).")
-
-    # 메인 스레드에서 큐에서 데이터를 소비하고 화면을 표시하는 루프
-    try:
-        while True:
-            # 1. 사람 데이터 큐에서 정보 소비 (비교/저장 로직)
-            if not person_data_queue.empty():
-                data_from_queue = person_data_queue.get()
-                print(f"Main thread received person data:")
-                for key, value in data_from_queue.items():
-                    if key == "embedding" and value is None:
-                        print(f"  {key}: None (embedding not generated in capture_frames)")
-                    # <--- 추가: 이미지 데이터가 있는 경우 정보 출력 ---
-                    elif key == "cropped_image_rgb":
-                        if value is not None:
-                            print(f"  {key}: <numpy array with shape {value.shape} and dtype {value.dtype}>")
-                        else:
-                            print(f"  {key}: None")
-                    # --------------------------------------------------
-                    else:
-                        print(f"  {key}: {value}")
-            
-            # 2. 디스플레이 프레임 큐에서 프레임 가져와 화면 표시
-            if not display_frame_queue.empty():
-                frame_to_display = display_frame_queue.get()
-                if frame_to_display is not None and frame_to_display.size > 0:
-                    cv2.imshow('Live Preview with YOLO Tracking (Press "q" to stop)', frame_to_display)
-                else:
-                    print("Warning: Received empty or invalid frame for display.")
-            
-            # 3. 키 입력 대기 및 종료 조건 확인 (메인 스레드에서만)
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                print("'q' 키 입력으로 작업을 중지합니다.")
-                break
-            
-            time.sleep(0.01) 
-
-            if not capture_thread.is_alive():
-                print("Capture thread finished. Main thread is also stopping.")
-                break
-
-    except KeyboardInterrupt:
-        print("Main thread received KeyboardInterrupt. Exiting.")
-    finally:
-        cv2.destroyAllWindows() 
-        
-        print("Processing any remaining data in the person data queue...")
-        while not person_data_queue.empty():
-            data_from_queue = person_data_queue.get()
-            print(f"  Remaining person data: {data_from_queue['timestamp']}, Person ID: {data_from_queue['person_id']}")
-        
-        print("Processing any remaining frames in the display queue...")
-        while not display_frame_queue.empty():
-            _ = display_frame_queue.get()
-        
-        print("Program terminated.")
