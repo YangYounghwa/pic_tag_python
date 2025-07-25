@@ -96,7 +96,13 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
         print(f"Error: '{find_class}' class not found in the loaded model. Person tracking might not work.")
         return
 
+    # 목표 프레임당 시간 계산
+    desired_frame_time = 1.0 / max_fps if max_fps > 0 else 0
+
+
     while True:
+        frame_start_time = time.time() # 프레임 처리 시작 시간 기록
+
         ret, frame = cap.read()
         frame_count += 1
 
@@ -116,7 +122,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
         annotated_frame = frame.copy() # 원본 프레임 복사
 
         is_this_a_saving_frame = False
-        if int(fps) > 0 and frame_count % int(fps) == 0: 
+        if int(fps) > 0 and frame_count % max_fps == 0: 
             is_this_a_saving_frame = True
 
         if results and results[0].boxes.id is not None:
@@ -189,7 +195,13 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
                         except queue.Full:
                             print(f"Person data queue full, skipping data for person ID {track_id} at {timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}")
 
+        # --- FPS 제한 로직 ---
+        frame_end_time = time.time() # 프레임 처리 종료 시간 기록
+        time_taken = frame_end_time - frame_start_time # 프레임 처리 소요 시간
         
+        if desired_frame_time > time_taken: # 목표 시간보다 빨리 처리되었다면
+            time.sleep(desired_frame_time - time_taken) # 남은 시간만큼 대기
+        # ---------------------
 
 
     # --- 루프 종료 후 자원 해제 ---
