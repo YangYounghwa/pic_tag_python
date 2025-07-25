@@ -15,15 +15,15 @@ from pathlib import Path
 def start_all_cameras(folder: Path = None):
     # Connect to the SQLite database to retrieve camera configurations in real production
    
-    base_dir = os.path.dirname(os.path.abspath(__file__))
     
+    base_dir = Path(__file__).resolve().parent.parent.parent  # ⬅️ if __file__ is inside /project/app/core/
     if not folder:
-        folder = Path(base_dir) / "data"
-    if not folder.exists():
-        folder.mkdir(parents=True, exist_ok=True) 
+        folder = base_dir / "data"
+    folder.mkdir(parents=True, exist_ok=True)
     log_db_path = folder / "db" / "identity_log.db"
-    log_db_path.parent.mkdir(parents=True, exist_ok=True)
-    
+    log_db_path.parent.mkdir(parents=True, exist_ok=True) 
+   
+   
     
     logger = IdentityLogger(log_db_path)
     frame_queue = Queue.Queue()
