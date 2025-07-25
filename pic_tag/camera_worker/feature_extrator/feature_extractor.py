@@ -5,6 +5,8 @@ from time import sleep
 import os
 import glob
 import xml.etree.ElementTree as ET
+import time
+import xml.etree.ElementTree as ET
 
 
 import torch
@@ -16,30 +18,46 @@ from torchvision import transforms
 from ultralytics import YOLO
 
 from .ReID_modelv2 import YOLOv11ReID
-
 import random
 import numpy as np
+import time
+import time
 
 
-def extract_features(feature_queue, frame_queue):
+def extract_features(frame_queue,feature_queue ):
+    
+    print("Starting feature extraction thread...")  
+    
+    # Load the YOLOv11 ReID model
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
     device = torch.device("cpu")
     
     model3 = YOLOv11ReID()
-    model3.load_state_dict(torch.load(os.path.join(base_dir, "reid_model_state_dictv2.0.pth"), map_location=device))
+    model3.load_state_dict(torch.load(os.path.join(base_dir, "reid_model_state_dict_0724_2.pth"), map_location=device))
 
     model3.eval()
     model3.to(device)
+   
+    # Debug line to confirm model loading
+    print(f"Feature extraction model loaded and ready on {device}.")
 
     
     
     while True:
         # Get a frame from the queue
-        frame_data = frame_queue.get()
+        try:
+            frame_data = frame_queue.get(timeout=0.2)
+        except queue.Empty as e:
+            # print("Frame queue is empty, exiting feature extraction.")
+            continue
+
         if frame_data is None:
+            # print("No more frames to process, exiting feature extraction.")
             sleep(0.1)
             continue  # Skip if no frame data is available
+        # Debug line to show which frame is being processed
+        print(f"[{time.strftime('%H:%M:%S')}] Extracting features from frame: {frame_data['img_name']}")
         image = frame_data["img"]
         box = frame_data["bounding_box"]
         timestamp = frame_data["timeStamp"]

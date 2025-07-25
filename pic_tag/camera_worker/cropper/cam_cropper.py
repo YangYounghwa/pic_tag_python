@@ -177,10 +177,12 @@ def capture_frames(cam_num, person_data_queue_instance, display_frame_queue_inst
                             "bb_y2": y2
                         }
                         
+
                         try:
                             person_data_queue_instance.put(person_detection_data, block=False)
                         except queue.Full:
                             print(f"Person data queue full, skipping data for person ID {track_id} at {timestamp_str}")
+
         
         # --- 어노테이션된 프레임을 디스플레이 큐에 넣기 ---
         try:

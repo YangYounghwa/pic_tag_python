@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pic-tag</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #ffffff;
+            color: #000000;
+            line-height: 1.6;
+        }
+
+        /* 로그인 화면 */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #000000;
+        }
+
+        .login-box {
+            background: #ffffff;
+            padding: 50px;
+            border: 1px solid #e0e0e0;
+            width: 400px;
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 2.5em;
+            color: #1a237e;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .login-subtitle {
+            color: #666666;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #000000;
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            background: #ffffff;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            border-color: #1a237e;
+            outline: none;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: #1a237e;
+            color: #ffffff;
+            border: none;
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: #0d1766;
+        }
+
+        /* 메인 대시보드 */
+        .dashboard {
+            display: none;
+            min-height: 100vh;
+            background: #ffffff;
+        }
+
+        .header {
+            background: #000000;
+            color: #ffffff;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 300;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .main-content {
+            display: flex;
+            min-height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 200px;
+            background: #f8f8f8;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .menu-item {
+            padding: 20px 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 400;
+            border-bottom: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .menu-item:hover {
+            background: #f0f0f0;
+        }
+
+        .menu-item.active {
+            background: #1a237e;
+            color: #ffffff;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 30px;
+        }
+
+        /* 페이지 타이틀 */
+        .page-title {
+            font-size: 24px;
+            font-weight: 300;
+            margin-bottom: 30px;
+            color: #000000;
+        }
+
+        /* 실시간 영상감지 메인 화면 */
+        .monitoring-main {
+            display: block;
+        }
+
+        .video-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+
+        .main-video-area {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-video {
+            flex: 1;
+            background: #000000;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 18px;
+            position: relative;
+        }
+
+        .video-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #ffffff;
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+
+        .video-controls {
+            padding: 20px;
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .timeline {
+            flex: 1;
+            height: 6px;
+            background: #e0e0e0;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .timeline-progress {
+            height: 100%;
+            background: #1a237e;
+            width: 30%;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            top: -3px;
+            background: #ff0000;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            left: 45%;
+        }
+
+        .camera-grid {
+            display: grid;
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            height: 100%;
+        }
+
+        .camera-thumb {
+            background: #f0f0f0;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.3s ease;
+        }
+
+        .camera-thumb.active {
+            border-color: #1a237e;
+        }
+
+        .camera-thumb:hover {
+            border-color: #666666;
+        }
+
+        .thumb-video {
+            flex: 1;
+            background: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 12px;
+        }
+
+        .thumb-info {
+            padding: 8px;
+            background: #f8f8f8;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        /* iOS 스타일 토글 */
+        .ios-toggle {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            background: #e0e0e0;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .ios-toggle.active {
+            background: #34c759;
+        }
+
+        .ios-toggle::after {
+            content: '';
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            background: #ffffff;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .ios-toggle.active::after {
+            transform: translateX(28px);
+        }
+
+        /* 통계 분석 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            padding: 25px;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 300;
+            margin-bottom: 10px;
+            color: #1a237e;
+        }
+
+        .stat-label {
+            color: #666666;
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .log-table {
+            width: 100%;
+            border: 1px solid #e0e0e0;
+            background: #ffffff;
+            margin-top: 20px;
+        }
+
+        .log-table th,
+        .log-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+
+        .log-table th {
+            background: #f8f8f8;
+            font-weight: 400;
+        }
+
+        .log-table tr:hover {
+            background: #f8f8f8;
+        }
+
+        /* 탐색 화면 */
+        .detection-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+
+        .detection-main {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detection-video {
+            flex: 1;
+            background: #000000;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 18px;
+            position: relative;
+        }
+
+        .detection-crops {
+            height: 150px;
+            background: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            padding: 15px;
+            overflow-x: auto;
+        }
+
+        .crop-title {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #666666;
+        }
+
+        .crop-grid {
+            display: flex;
+            gap: 10px;
+        }
+
+        .crop-item {
+            width: 80px;
+            height: 100px;
+            background: #ffffff;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #666666;
+        }
+
+        .crop-item:hover {
+            border-color: #1a237e;
+        }
+
+        .crop-item.selected {
+            border-color: #1a237e;
+            background: #f0f0ff;
+        }
+
+        .detection-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detection-log {
+            flex: 1;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: #1a237e;
+            font-weight: 500;
+        }
+
+        .log-action {
+            color: #666666;
+            margin-top: 2px;
+        }
+
+        /* 설정 화면 */
+        .settings-section {
+            border: 1px solid #e0e0e0;
+            background: #ffffff;
+            margin-bottom: 30px;
+        }
+
+        .settings-header {
+            padding: 20px;
+            background: #f8f8f8;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .settings-title {
+            font-size: 16px;
+            font-weight: 400;
+            color: #000000;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        /* 반응형 */
+        @media (max-width: 1024px) {
+            .video-layout,
+            .detection-layout {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .camera-grid {
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: 1fr;
+                height: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                display: flex;
+                overflow-x: auto;
+            }
+            
+            .menu-item {
+                white-space: nowrap;
+                border-bottom: none;
+                border-right: 1px solid #e0e0e0;
+            }
+
+            .content-area {
+                padding: 20px;
+            }
+
+            .camera-grid {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: repeat(2, 1fr);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 로그인 화면 -->
+    <div id="loginPage" class="login-container">
+        <div class="login-box">
+            <div class="login-logo">Pic-tag</div>
+            <div class="login-subtitle">실시간 영상 인식 시스템</div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">사용자명</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">비밀번호</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="login-btn">로그인</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 메인 대시보드 -->
+    <div id="dashboardPage" class="dashboard">
+        <header class="header">
+            <div class="logo">Pic-tag</div>
+            <div class="user-info">
+                <span>관리자</span>
+                <button class="logout-btn" onclick="switchTheme('bootstrap')" style="margin-right: 10px;">Bootstrap 테마</button>
+                <button class="logout-btn" onclick="logout()">로그아웃</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <nav class="sidebar">
+                <div class="menu-item active" onclick="showSection('monitoring')">실시간 영상감지</div>
+                <div class="menu-item" onclick="showSection('detection')">탐색</div>
+                <div class="menu-item" onclick="showSection('statistics')">통계 분석</div>
+                <div class="menu-item" onclick="showSection('settings')">시스템 설정</div>
+            </nav>
+
+            <main class="content-area">
+                <!-- 실시간 영상감지 -->
+                <div id="monitoring" class="section monitoring-main">
+                    <h1 class="page-title">실시간 영상감지</h1>
+                    
+                    <div class="video-layout">
+                        <div class="main-video-area">
+                            <div class="main-video">
+                                <div class="video-info">실시간 웹캠 - CAM01</div>
+                                <video id="mainWebcam" autoplay muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+                                <div id="webcamError" style="display: none; color: white; text-align: center; padding: 20px;">
+                                    웹캠에 접근할 수 없습니다. 브라우저 설정을 확인해주세요.
+                                </div>
+                            </div>
+                            <div class="video-controls">
+                                <button class="control-btn" onclick="playPause()">▶</button>
+                                <div class="timeline" onclick="seekVideo(event)">
+                                    <div class="timeline-progress"></div>
+                                    <div class="timeline-marker"></div>
+                                </div>
+                                <span id="timeDisplay">14:30:25</span>
+                            </div>
+                        </div>
+                        
+                        <div class="camera-grid">
+                            <div class="camera-thumb active" onclick="selectCamera(this, '실시간 웹캠', 'CAM01')">
+                                <div class="thumb-video">
+                                    <video id="thumbWebcam1" autoplay muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+                                </div>
+                                <div class="thumb-info">실시간 웹캠</div>
+                            </div>
+                            <div class="camera-thumb" onclick="selectCamera(this, '웹캠 미러모드', 'CAM02')">
+                                <div class="thumb-video">
+                                    <video id="thumbWebcam2" autoplay muted style="width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);"></video>
+                                </div>
+                                <div class="thumb-info">웹캠 미러모드</div>
+                            </div>
+                            <div class="camera-thumb" onclick="selectCamera(this, '시뮬레이션 카메라', 'CAM03')">
+                                <div class="thumb-video">Offline</div>
+                                <div class="thumb-info">시뮬레이션 카메라</div>
+                            </div>
+                            <div class="camera-thumb" onclick="selectCamera(this, '웹캠 (흑백)', 'CAM04')">
+                                <div class="thumb-video">
+                                    <video id="thumbWebcam3" autoplay muted style="width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%);"></video>
+                                </div>
+                                <div class="thumb-info">웹캠 (흑백)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 탐색 화면 -->
+                <div id="detection" class="section hidden">
+                    <h1 class="page-title">탐색 (객체 감지)</h1>
+                    
+                    <div class="detection-layout">
+                        <div class="detection-main">
+                            <div class="detection-video">
+                                <div class="video-info">현관 입구 - CAM01</div>
+                                탐색 영상 화면 (모델 탑재 예정)
+                            </div>
+                            <div class="detection-crops">
+                                <div class="crop-title">감지된 인원</div>
+                                <div class="crop-grid">
+                                    <div class="crop-item" onclick="selectCrop(this, '14:30:15')">
+                                        Person 1
+                                    </div>
+                                    <div class="crop-item" onclick="selectCrop(this, '14:30:22')">
+                                        Person 2
+                                    </div>
+                                    <div class="crop-item" onclick="selectCrop(this, '14:30:28')">
+                                        Person 3
+                                    </div>
+                                    <div class="crop-item" onclick="selectCrop(this, '14:30:35')">
+                                        Person 4
+                                    </div>
+                                    <div class="crop-item" onclick="selectCrop(this, '14:30:41')">
+                                        Person 5
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detection-panel">
+                            <div class="detection-log">
+                                <h3 style="margin-bottom: 15px;">감지 로그</h3>
+                                <div class="log-entry">
+                                    <div class="log-time">14:30:41</div>
+                                    <div class="log-action">인원 감지 - 현관 입구 진입</div>
+                                </div>
+                                <div class="log-entry">
+                                    <div class="log-time">14:30:35</div>
+                                    <div class="log-action">인원 감지 - 현관 입구 대기</div>
+                                </div>
+                                <div class="log-entry">
+                                    <div class="log-time">14:30:28</div>
+                                    <div class="log-action">인원 감지 - 현관 입구 접근</div>
+                                </div>
+                                <div class="log-entry">
+                                    <div class="log-time">14:30:22</div>
+                                    <div class="log-action">인원 감지 - 주차장에서 이동</div>
+                                </div>
+                                <div class="log-entry">
+                                    <div class="log-time">14:30:15</div>
+                                    <div class="log-action">인원 감지 - 주차장 진입</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 통계 분석 -->
+                <div id="statistics" class="section hidden">
+                    <h1 class="page-title">통계 분석</h1>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">142</div>
+                            <div class="stat-label">오늘 입장자 수</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">98</div>
+                            <div class="stat-label">오늘 퇴장자 수</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">44</div>
+                            <div class="stat-label">현재 체류 인원</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">25분</div>
+                            <div class="stat-label">평균 체류시간</div>
+                        </div>
+                    </div>
+
+                    <h2 style="margin: 30px 0 20px 0; font-size: 18px; font-weight: 400;">사용자 입출 로그</h2>
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th>시간</th>
+                                <th>구분</th>
+                                <th>위치</th>
+                                <th>체류시간</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>14:30:41</td>
+                                <td>입장</td>
+                                <td>현관 입구</td>
+                                <td>-</td>
+                                <td>진행중</td>
+                            </tr>
+                            <tr>
+                                <td>14:25:15</td>
+                                <td>퇴장</td>
+                                <td>현관 입구</td>
+                                <td>1시간 15분</td>
+                                <td>완료</td>
+                            </tr>
+                            <tr>
+                                <td>14:20:32</td>
+                                <td>입장</td>
+                                <td>현관 입구</td>
+                                <td>-</td>
+                                <td>진행중</td>
+                            </tr>
+                            <tr>
+                                <td>14:15:48</td>
+                                <td>퇴장</td>
+                                <td>비상구</td>
+                                <td>45분</td>
+                                <td>완료</td>
+                            </tr>
+                            <tr>
+                                <td>14:10:22</td>
+                                <td>입장</td>
+                                <td>현관 입구</td>
+                                <td>-</td>
+                                <td>진행중</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 시스템 설정 -->
+                <div id="settings" class="section hidden">
+                    <h1 class="page-title">시스템 설정</h1>
+                    
+                    <div class="settings-section">
+                        <div class="settings-header">
+                            <div class="settings-title">영상 인식 설정</div>
+                        </div>
+                        <div class="setting-item">
+                            <span>실시간 객체 감지</span>
+                            <div class="ios-toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <span>인원 추적</span>
+                            <div class="ios-toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <span>야간 감지 모드</span>
+                            <div class="ios-toggle" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <span>영상 자동 저장</span>
+                            <div class="ios-toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <div class="settings-header">
+                            <div class="settings-title">알림 설정</div>
+                        </div>
+                        <div class="setting-item">
+                            <span>실시간 알림</span>
+                            <div class="ios-toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <span>이메일 알림</span>
+                            <div class="ios-toggle" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <span>모바일 푸시 알림</span>
+                            <div class="ios-toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <div class="settings-header">
+                            <div class="settings-title">시스템 관리</div>
+                        </div>
+                        <div class="setting-item">
+                            <span>자동 백업</span>
+                            <div class="ios-toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <span>로그 기록</span>
+                            <div class="ios-toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                        <div class="setting-item">
+                            <span>성능 모니터링</span>
+                            <div class="ios-toggle active" onclick="toggleSetting(this)"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // 로그인 처리
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (username === 'admin' && password === 'admin123') {
+                showDashboard();
+            } else {
+                alert('잘못된 사용자명 또는 비밀번호입니다.');
+            }
+        });
+
+        // 로그아웃
+        function logout() {
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('dashboardPage').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // 섹션 표시
+        function showSection(sectionName) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.add('hidden'));
+            
+            document.getElementById(sectionName).classList.remove('hidden');
+            
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => item.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // 카메라 선택
+        function selectCamera(element, location, camId) {
+            const thumbs = document.querySelectorAll('.camera-thumb');
+            thumbs.forEach(thumb => thumb.classList.remove('active'));
+            element.classList.add('active');
+            
+            const videoInfo = document.querySelector('.video-info');
+            videoInfo.textContent = `${location} - ${camId}`;
+            
+            // 클릭한 썸네일의 비디오 스트림을 메인 비디오로 전환
+            const thumbVideo = element.querySelector('video');
+            const mainVideo = document.getElementById('mainWebcam');
+            
+            if (thumbVideo && mainVideo && thumbVideo.srcObject) {
+                // 클릭한 썸네일의 스트림을 메인 비디오에 적용
+                mainVideo.srcObject = thumbVideo.srcObject;
+                console.log(`메인 비디오가 ${location}로 전환되었습니다.`);
+            } else if (camId === 'CAM01' && webcamStream) {
+                // CAM01 (실시간 웹캠)인 경우 로컬 웹캠 스트림 사용
+                mainVideo.srcObject = webcamStream;
+                console.log('메인 비디오가 로컬 웹캠으로 전환되었습니다.');
+            }
+        }
+
+        // 영상 재생/일시정지
+        function playPause() {
+            const btn = event.target;
+            if (btn.textContent === '▶') {
+                btn.textContent = '⏸';
+            } else {
+                btn.textContent = '▶';
+            }
+        }
+
+        // 타임라인 시크
+        function seekVideo(event) {
+            const timeline = event.currentTarget;
+            const rect = timeline.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const percentage = (clickX / rect.width) * 100;
+            
+            const progress = timeline.querySelector('.timeline-progress');
+            const marker = timeline.querySelector('.timeline-marker');
+            
+            progress.style.width = percentage + '%';
+            marker.style.left = percentage + '%';
+        }
+
+        // 크롭 이미지 선택
+        function selectCrop(element, timestamp) {
+            // 기존 선택 해제
+            const crops = document.querySelectorAll('.crop-item');
+            crops.forEach(crop => crop.classList.remove('selected'));
+            
+            // 현재 항목 선택
+            element.classList.add('selected');
+            
+            // 타임라인에 마커 표시
+            const marker = document.querySelector('.timeline-marker');
+            if (marker) {
+                // 시간에 따른 위치 계산 (예시)
+                const timeValue = parseInt(timestamp.split(':')[2]);
+                const position = (timeValue / 60) * 100; // 분 단위로 계산
+                marker.style.left = Math.min(position, 90) + '%';
+            }
+            
+            // 로그에 해당 시간 강조
+            highlightLogEntry(timestamp);
+        }
+
+        // 로그 엔트리 강조
+        function highlightLogEntry(timestamp) {
+            const logEntries = document.querySelectorAll('.log-entry');
+            logEntries.forEach(entry => {
+                const timeElement = entry.querySelector('.log-time');
+                if (timeElement && timeElement.textContent === timestamp) {
+                    entry.style.background = '#f0f0ff';
+                    entry.style.borderLeft = '3px solid #1a237e';
+                } else {
+                    entry.style.background = '';
+                    entry.style.borderLeft = '';
+                }
+            });
+        }
+
+        // iOS 스타일 토글
+        function toggleSetting(element) {
+            element.classList.toggle('active');
+        }
+
+        // 테마 전환 함수
+        function switchTheme(theme) {
+            window.location.href = `/?theme=${theme}`;
+        }
+
+        // 웹캠 관련 변수
+        let webcamStream = null;
+        let isWebcamActive = false;
+        
+        // WebRTC 관련 변수
+        let socket = null;
+        let peerConnections = {};
+        let remoteStreams = {};
+        let myUserId = null;
+        
+        // STUN 서버 설정
+        const iceServers = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        // 웹캠 초기화 함수
+        async function initWebcam() {
+            try {
+                const constraints = {
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    },
+                    audio: false
+                };
+
+                webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                // 메인 웹캠 비디오에 스트림 연결
+                const mainWebcam = document.getElementById('mainWebcam');
+                if (mainWebcam) {
+                    mainWebcam.srcObject = webcamStream;
+                    mainWebcam.style.display = 'block';
+                }
+
+                // 썸네일 웹캠들에도 같은 스트림 연결
+                const thumbWebcams = ['thumbWebcam1', 'thumbWebcam2', 'thumbWebcam3'];
+                thumbWebcams.forEach(id => {
+                    const video = document.getElementById(id);
+                    if (video) {
+                        video.srcObject = webcamStream;
+                    }
+                });
+
+                isWebcamActive = true;
+                console.log('웹캠이 성공적으로 초기화되었습니다.');
+
+                // 웹캠 에러 메시지 숨기기
+                const errorDiv = document.getElementById('webcamError');
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error('웹캠 접근 오류:', error);
+                
+                // 에러 메시지 표시
+                const errorDiv = document.getElementById('webcamError');
+                const mainWebcam = document.getElementById('mainWebcam');
+                
+                if (errorDiv && mainWebcam) {
+                    mainWebcam.style.display = 'none';
+                    errorDiv.style.display = 'block';
+                    
+                    if (error.name === 'NotAllowedError') {
+                        errorDiv.innerHTML = '웹캠 접근이 거부되었습니다.<br>브라우저 설정에서 카메라 권한을 허용해주세요.';
+                    } else if (error.name === 'NotFoundError') {
+                        errorDiv.innerHTML = '카메라를 찾을 수 없습니다.<br>카메라가 연결되어 있는지 확인해주세요.';
+                    } else {
+                        errorDiv.innerHTML = '웹캠에 접근할 수 없습니다.<br>다른 프로그램에서 카메라를 사용 중일 수 있습니다.';
+                    }
+                }
+            }
+        }
+
+        // 웹캠 중지 함수
+        function stopWebcam() {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+                isWebcamActive = false;
+                console.log('웹캠이 중지되었습니다.');
+            }
+        }
+
+        // 웹캠 켜기/끄기 토글 함수
+        function toggleWebcam() {
+            if (isWebcamActive) {
+                stopWebcam();
+                // 비디오 요소들 숨기기
+                const videos = ['mainWebcam', 'thumbWebcam1', 'thumbWebcam2', 'thumbWebcam3'];
+                videos.forEach(id => {
+                    const video = document.getElementById(id);
+                    if (video) {
+                        video.style.display = 'none';
+                    }
+                });
+            } else {
+                initWebcam();
+            }
+        }
+
+        // 실시간 시간 업데이트
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ko-KR', { hour12: false });
+            const timeDisplay = document.getElementById('timeDisplay');
+            if (timeDisplay) {
+                timeDisplay.textContent = timeString;
+            }
+        }
+
+        // 통계 데이터 업데이트
+        function updateStats() {
+            const statValues = document.querySelectorAll('.stat-value');
+            if (statValues.length >= 4) {
+                // 실시간으로 변하는 데이터 시뮬레이션
+                const currentEntry = parseInt(statValues[0].textContent) || 142;
+                const currentExit = parseInt(statValues[1].textContent) || 98;
+                
+                // 간헐적으로 입장자 증가
+                if (Math.random() < 0.1) {
+                    statValues[0].textContent = currentEntry + 1;
+                    statValues[2].textContent = (currentEntry + 1) - currentExit; // 현재 체류 인원
+                }
+                
+                // 간헐적으로 퇴장자 증가
+                if (Math.random() < 0.08) {
+                    statValues[1].textContent = currentExit + 1;
+                    statValues[2].textContent = currentEntry - (currentExit + 1); // 현재 체류 인원
+                }
+                
+                // 평균 체류시간 변동
+                const avgTimes = ['23분', '25분', '27분', '24분', '26분'];
+                statValues[3].textContent = avgTimes[Math.floor(Math.random() * avgTimes.length)];
+            }
+        }
+
+        // 새로운 로그 엔트리 추가
+        function addNewLogEntry() {
+            const logTable = document.querySelector('.log-table tbody');
+            if (logTable && Math.random() < 0.05) { // 5% 확률로 새 로그 추가
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('ko-KR', { hour12: false });
+                const types = ['입장', '퇴장'];
+                const locations = ['현관 입구', '비상구', '주차장 입구'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                const location = locations[Math.floor(Math.random() * locations.length)];
+                
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td>${timeString}</td>
+                    <td>${type}</td>
+                    <td>${location}</td>
+                    <td>${type === '입장' ? '-' : Math.floor(Math.random() * 120) + '분'}</td>
+                    <td>${type === '입장' ? '진행중' : '완료'}</td>
+                `;
+                
+                logTable.insertBefore(newRow, logTable.firstChild);
+                
+                // 최대 10개 로그만 유지
+                const rows = logTable.querySelectorAll('tr');
+                if (rows.length > 10) {
+                    logTable.removeChild(rows[rows.length - 1]);
+                }
+            }
+        }
+
+        // 감지 로그 업데이트
+        function updateDetectionLog() {
+            const detectionLog = document.querySelector('.detection-log');
+            if (detectionLog && Math.random() < 0.1) { // 10% 확률로 새 감지 로그 추가
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('ko-KR', { hour12: false });
+                const actions = [
+                    '인원 감지 - 현관 입구 진입',
+                    '인원 감지 - 주차장 이동',
+                    '인원 감지 - 복도 통과',
+                    '인원 감지 - 비상구 접근',
+                    '인원 감지 - 대기 중'
+                ];
+                const action = actions[Math.floor(Math.random() * actions.length)];
+                
+                const newEntry = document.createElement('div');
+                newEntry.className = 'log-entry';
+                newEntry.innerHTML = `
+                    <div class="log-time">${timeString}</div>
+                    <div class="log-action">${action}</div>
+                `;
+                
+                const logContainer = detectionLog.querySelector('h3').nextSibling;
+                detectionLog.insertBefore(newEntry, logContainer.nextSibling);
+                
+                // 최대 15개 로그만 유지
+                const entries = detectionLog.querySelectorAll('.log-entry');
+                if (entries.length > 15) {
+                    detectionLog.removeChild(entries[entries.length - 1]);
+                }
+            }
+        }
+
+        // 자동 재생 시뮬레이션
+        function simulatePlayback() {
+            const progress = document.querySelector('.timeline-progress');
+            const marker = document.querySelector('.timeline-marker');
+            
+            if (progress && marker) {
+                let currentWidth = parseInt(progress.style.width) || 30;
+                if (currentWidth < 90) {
+                    currentWidth += 0.5;
+                    progress.style.width = currentWidth + '%';
+                    marker.style.left = currentWidth + '%';
+                } else {
+                    progress.style.width = '0%';
+                    marker.style.left = '0%';
+                }
+            }
+        }
+
+        // 모든 업데이트 함수들을 정기적으로 실행
+        setInterval(updateTime, 1000);          // 1초마다 시간 업데이트
+        setInterval(updateStats, 10000);        // 10초마다 통계 업데이트
+        setInterval(addNewLogEntry, 15000);     // 15초마다 새 로그 확인
+        setInterval(updateDetectionLog, 8000);  // 8초마다 감지 로그 업데이트
+        setInterval(simulatePlayback, 2000);    // 2초마다 재생 시뮬레이션
+
+        // 초기 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('dashboardPage').style.display = 'none';
+            updateTime();
+        });
+
+        // WebSocket 연결 초기화
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/video_call/`;
+            
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = function(event) {
+                console.log('WebSocket 연결됨');
+            };
+            
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+            
+            socket.onclose = function(event) {
+                console.log('WebSocket 연결 종료');
+                setTimeout(initWebSocket, 3000); // 3초 후 재연결 시도
+            };
+            
+            socket.onerror = function(error) {
+                console.error('WebSocket 오류:', error);
+            };
+        }
+        
+        // WebSocket 메시지 처리
+        async function handleWebSocketMessage(data) {
+            console.log('WebSocket 메시지 받음:', data);
+            
+            switch(data.type) {
+                case 'user_joined':
+                    console.log('새 사용자 입장:', data.user_id);
+                    await createPeerConnection(data.user_id);
+                    break;
+                    
+                case 'user_left':
+                    console.log('사용자 퇴장:', data.user_id);
+                    closePeerConnection(data.user_id);
+                    break;
+                    
+                case 'offer':
+                    await handleOffer(data);
+                    break;
+                    
+                case 'answer':
+                    await handleAnswer(data);
+                    break;
+                    
+                case 'ice_candidate':
+                    await handleIceCandidate(data);
+                    break;
+            }
+        }
+        
+        // Peer Connection 생성
+        async function createPeerConnection(userId) {
+            try {
+                const peerConnection = new RTCPeerConnection(iceServers);
+                peerConnections[userId] = peerConnection;
+                
+                // ICE Candidate 이벤트
+                peerConnection.onicecandidate = function(event) {
+                    if (event.candidate) {
+                        socket.send(JSON.stringify({
+                            type: 'ice_candidate',
+                            candidate: event.candidate,
+                            to_user: userId
+                        }));
+                    }
+                };
+                
+                // Remote Stream 이벤트
+                peerConnection.ontrack = function(event) {
+                    console.log('Remote stream 받음:', userId);
+                    remoteStreams[userId] = event.streams[0];
+                    displayRemoteStream(userId, event.streams[0]);
+                };
+                
+                // 내 스트림 추가
+                if (webcamStream) {
+                    webcamStream.getTracks().forEach(track => {
+                        peerConnection.addTrack(track, webcamStream);
+                    });
+                }
+                
+                // Offer 생성 및 전송
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                
+                socket.send(JSON.stringify({
+                    type: 'offer',
+                    offer: offer,
+                    to_user: userId
+                }));
+                
+            } catch (error) {
+                console.error('Peer Connection 생성 오류:', error);
+            }
+        }
+        
+        // Offer 처리
+        async function handleOffer(data) {
+            try {
+                const peerConnection = new RTCPeerConnection(iceServers);
+                peerConnections[data.from_user] = peerConnection;
+                
+                // ICE Candidate 이벤트
+                peerConnection.onicecandidate = function(event) {
+                    if (event.candidate) {
+                        socket.send(JSON.stringify({
+                            type: 'ice_candidate',
+                            candidate: event.candidate,
+                            to_user: data.from_user
+                        }));
+                    }
+                };
+                
+                // Remote Stream 이벤트
+                peerConnection.ontrack = function(event) {
+                    console.log('Remote stream 받음:', data.from_user);
+                    remoteStreams[data.from_user] = event.streams[0];
+                    displayRemoteStream(data.from_user, event.streams[0]);
+                };
+                
+                // 내 스트림 추가
+                if (webcamStream) {
+                    webcamStream.getTracks().forEach(track => {
+                        peerConnection.addTrack(track, webcamStream);
+                    });
+                }
+                
+                // Offer 설정 및 Answer 생성
+                await peerConnection.setRemoteDescription(data.offer);
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                
+                socket.send(JSON.stringify({
+                    type: 'answer',
+                    answer: answer,
+                    to_user: data.from_user
+                }));
+                
+            } catch (error) {
+                console.error('Offer 처리 오류:', error);
+            }
+        }
+        
+        // Answer 처리
+        async function handleAnswer(data) {
+            try {
+                const peerConnection = peerConnections[data.from_user];
+                if (peerConnection) {
+                    await peerConnection.setRemoteDescription(data.answer);
+                }
+            } catch (error) {
+                console.error('Answer 처리 오류:', error);
+            }
+        }
+        
+        // ICE Candidate 처리
+        async function handleIceCandidate(data) {
+            try {
+                const peerConnection = peerConnections[data.from_user];
+                if (peerConnection) {
+                    await peerConnection.addIceCandidate(data.candidate);
+                }
+            } catch (error) {
+                console.error('ICE Candidate 처리 오류:', error);
+            }
+        }
+        
+        // Remote Stream 표시
+        function displayRemoteStream(userId, stream) {
+            // 카메라 썸네일에 원격 스트림 표시
+            const thumbnails = document.querySelectorAll('.camera-thumb');
+            const availableThumb = Array.from(thumbnails).find(thumb => {
+                const video = thumb.querySelector('video');
+                return video && !video.srcObject;
+            });
+            
+            if (availableThumb) {
+                const video = availableThumb.querySelector('video');
+                if (video) {
+                    video.srcObject = stream;
+                    const infoDiv = availableThumb.querySelector('.thumb-info');
+                    if (infoDiv) {
+                        infoDiv.textContent = `사용자 ${userId}`;
+                    }
+                    
+                    // 썸네일 클릭 이벤트 업데이트 (원격 사용자 스트림용)
+                    availableThumb.setAttribute('onclick', `selectCamera(this, '사용자 ${userId}', 'REMOTE_${userId}')`);
+                }
+            }
+        }
+        
+        // Peer Connection 종료
+        function closePeerConnection(userId) {
+            if (peerConnections[userId]) {
+                peerConnections[userId].close();
+                delete peerConnections[userId];
+            }
+            if (remoteStreams[userId]) {
+                delete remoteStreams[userId];
+            }
+            
+            // 해당 사용자의 썸네일 정리
+            const thumbnails = document.querySelectorAll('.camera-thumb');
+            thumbnails.forEach(thumb => {
+                const infoDiv = thumb.querySelector('.thumb-info');
+                if (infoDiv && infoDiv.textContent === `사용자 ${userId}`) {
+                    const video = thumb.querySelector('video');
+                    if (video) {
+                        video.srcObject = null;
+                    }
+                    infoDiv.textContent = '연결 대기중';
+                    thumb.setAttribute('onclick', `selectCamera(this, '연결 대기중', 'EMPTY')`);
+                }
+            });
+        }
+
+        // 대시보드 표시 시 웹캠 시작
+        function showDashboard() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('dashboardPage').style.display = 'block';
+            
+            // 웹캠 및 WebSocket 초기화
+            setTimeout(async () => {
+                await initWebcam();
+                initWebSocket();
+            }, 1000);
+        }
+
+        // 키보드 단축키
+        document.addEventListener('keydown', function(e) {
+            // 스페이스바로 재생/일시정지
+            if (e.code === 'Space' && document.getElementById('monitoring').style.display !== 'none') {
+                e.preventDefault();
+                const playBtn = document.querySelector('.video-controls button');
+                if (playBtn) playBtn.click();
+            }
+            
+            // 숫자 키로 카메라 선택
+            if (e.code >= 'Digit1' && e.code <= 'Digit4') {
+                const cameraIndex = parseInt(e.code.charAt(5)) - 1;
+                const cameras = document.querySelectorAll('.camera-thumb');
+                if (cameras[cameraIndex]) {
+                    cameras[cameraIndex].click();
+                }
+            }
+        });
+
+        // 터치 지원 (모바일)
+        let touchStartX = 0;
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            const touchEndX = e.changedTouches[0].clientX;
+            const diff = touchStartX - touchEndX;
+            
+            // 스와이프로 카메라 전환
+            if (Math.abs(diff) > 50) {
+                const activeCamera = document.querySelector('.camera-thumb.active');
+                const cameras = Array.from(document.querySelectorAll('.camera-thumb'));
+                const currentIndex = cameras.indexOf(activeCamera);
+                
+                if (diff > 0 && currentIndex < cameras.length - 1) {
+                    cameras[currentIndex + 1].click();
+                } else if (diff < 0 && currentIndex > 0) {
+                    cameras[currentIndex - 1].click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

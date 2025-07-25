@@ -11,5 +11,10 @@ __pycache__/
 *.log
 detected_images/
 *.pt
+
 .DS_Store
 img/
+
+*debug.ipynb
+*.ipynb_checkpoints
+
