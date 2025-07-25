@@ -46,7 +46,7 @@ def draw_bounding_box(
     return image
 
 
-def capture_frames(cam_num, person_data_queue_instance, display_frame_queue_instance, web_link=None):
+def capture_frames(cam_num, person_data_queue_instance, web_link=None):
     global global_image_sequence_counter
 
     main_data_folder = "data"
@@ -167,7 +167,6 @@ def capture_frames(cam_num, person_data_queue_instance, display_frame_queue_inst
                         person_detection_data = {
                             "timestamp": timestamp_str,
                             "person_id": track_id,
-                            "embedding": None,
                             "file_path": image_filepath,
                             "cropped_image_rgb": cropped_image_rgb, # <--- 추가: RGB 이미지 데이터
                             "camera_id": cam_num,
@@ -184,15 +183,7 @@ def capture_frames(cam_num, person_data_queue_instance, display_frame_queue_inst
                             print(f"Person data queue full, skipping data for person ID {track_id} at {timestamp_str}")
 
         
-        # --- 어노테이션된 프레임을 디스플레이 큐에 넣기 ---
-        try:
-            while display_frame_queue_instance.qsize() >= display_frame_queue_instance.maxsize:
-                display_frame_queue_instance.get_nowait()
-            display_frame_queue_instance.put_nowait(annotated_frame)
-        except queue.Full:
-            pass
-        except queue.Empty:
-            pass
+        # --- 어노테이션된 프레임을 디스플레이 큐에 넣기 ---  영상 저장을 할꺼면 이게 필요하해요
 
 
     # --- 루프 종료 후 자원 해제 ---
