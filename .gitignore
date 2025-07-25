@@ -12,3 +12,4 @@ __pycache__/
 detected_images/
 *.pt
 .DS_Store
+img/
