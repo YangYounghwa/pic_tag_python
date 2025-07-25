@@ -34,7 +34,7 @@ def extract_features(frame_queue,feature_queue ):
     device = torch.device("cpu")
     
     model3 = YOLOv11ReID()
-    model3.load_state_dict(torch.load(os.path.join(base_dir, "reid_model_state_dictv2.0.pth"), map_location=device))
+    model3.load_state_dict(torch.load(os.path.join(base_dir, "reid_model_state_dict_0724_2.pth"), map_location=device))
 
     model3.eval()
     model3.to(device)
