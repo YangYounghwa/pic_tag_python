@@ -26,6 +26,8 @@ class IdentityEngine(threading.Thread):
             try:
                 feature_data = self.queue.get(timeout=0.1)
                 if not feature_data:
+                    print("No more feature data to process, sleeping for a while...")
+                    time.sleep(0.25)
                     continue
 
                 # Extract data
