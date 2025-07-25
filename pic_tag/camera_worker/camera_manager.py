@@ -10,16 +10,27 @@ from .grouper import IdentityEngine
 import queue as Queue
 from .grouper.id_logger import IdentityLogger
 
-frame_queue = Queue.Queue()
-feature_queue = Queue.Queue()
+from pathlib import Path
 
-
-
-def start_all_cameras():
+def start_all_cameras(folder: Path = None):
     # Connect to the SQLite database to retrieve camera configurations in real production
    
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    logger = IdentityLogger(os.path.join(base_dir, r"..\..\data\db\identity_log.db"))
+    
+    base_dir = Path(__file__).resolve().parent.parent.parent  # ⬅️ if __file__ is inside /project/app/core/
+    if not folder:
+        folder = base_dir / "data"
+    folder.mkdir(parents=True, exist_ok=True)
+    log_db_path = folder / "db" / "identity_log.db"
+    log_db_path.parent.mkdir(parents=True, exist_ok=True) 
+   
+   
+    
+    logger = IdentityLogger(log_db_path)
+    frame_queue = Queue.Queue()
+    feature_queue = Queue.Queue()
+
+    project_dir = Path(__file__).resolve().parent 
+    data_dir = project_dir.parent / 'data'
     
     
     feature_extractor_thread = threading.Thread(target=extract_features,args=(frame_queue, feature_queue,))
@@ -31,5 +42,5 @@ def start_all_cameras():
     
     for i in range(1):
         camera_id = i
-        camera_thread = threading.Thread(target=capture_frames, args=(camera_id,frame_queue,))
+        camera_thread = threading.Thread(target=capture_frames, args=(camera_id, frame_queue, data_dir, None)  )
         camera_thread.start()
