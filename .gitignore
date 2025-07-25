@@ -12,9 +12,18 @@ __pycache__/
 detected_images/
 *.pt
 
+
 # 보안 파일들
 *.pem
 *.key
 *.crt
 .env
 local_settings.py
+
+.DS_Store
+img/
+
+*debug.ipynb
+*.ipynb_checkpoints
+
+
