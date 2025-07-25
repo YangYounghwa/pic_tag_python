@@ -2,7 +2,7 @@ import sqlite3
 import os
 
 class IdentityLogger:
-    def __init__(self, db_path="..\..\..\data\db\identity_log.db"):
+    def __init__(self, db_path=".\\..\\..\\data\\db\\identity_log.db"):
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self._init_db()
 
