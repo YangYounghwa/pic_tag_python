@@ -3,20 +3,22 @@ import time
 import os
 from ultralytics import YOLO
 import datetime
-import queue
+
+# 코드가 없어서 임시 테스트용 코드로 대체
 # from pic_tag.camera_worker import frame_queue
+import queue # 테스트용 임포트
 
 
 # --- 모든 저장 이미지를 위한 전역 순차 번호 카운터 ---
 global_image_sequence_counter = 0
+
 
 # --- 큐 객체 생성 (이 큐를 통해 데이터를 전달할 것입니다) ---
 # 이 큐는 메인 스레드와 capture_frames 스레드 간의 통신에 사용됩니다.
 frame_data_queue = queue.Queue(maxsize=10) # 큐 사이즈를 제한하여 메모리 과부하 방지
 
 
-
-def model_load(model_name="yolov8n.pt"):
+def model_load(model_name):
     try:
         model = YOLO(model_name)
         print(f"'{model_name}' model loaded successfully.")
@@ -29,6 +31,7 @@ def model_load(model_name="yolov8n.pt"):
 def make_folder(folder_name):
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
+        print(f"{folder_name} folder created.")
 
 
 def draw_bounding_box(
@@ -46,40 +49,51 @@ def draw_bounding_box(
 
 
 def capture_frames(cam_num, frame_data_queue_instance, web_link=None): # rtsp_url 인자를 제거
+    # 위에서 선언했던 전역 변수 사용 명시
     global global_image_sequence_counter
 
-    main_detected_images_folder = "detected_images"
-    make_folder(main_detected_images_folder)
+    # 이미지를 저장할 폴더 경로 지정/생성
+    main_data_folder = "data"
+    sub_data_folder = "img"
+    main_data_folder_path = main_data_folder
+    sub_data_folder_path = os.path.join(main_data_folder, sub_data_folder)
+    make_folder(main_data_folder_path)
+    make_folder(sub_data_folder_path)
 
     # --- 웹캠 사용을 위해 VideoCapture 인자를 0으로 변경 ---
     cap = cv2.VideoCapture(0) # 0은 보통 시스템의 기본 웹캠을 의미합니다.
-    # 만약 여러 웹캠이 있다면 1, 2 등으로 변경할 수 있습니다.
 
+    # 예외 처리: 카메라 미동작 시 에러 메시지 출력
     if not cap.isOpened():
         print(f"Failed to open webcam (camera index {cam_num}). Please check if the webcam is connected and available.")
         return
 
+    # fps 설정: 카메라의 fps를 가져오되, 불가하다면 30으로 설정
     fps = cap.get(cv2.CAP_PROP_FPS)
     if fps == 0:
         fps = 30
         print(f"Warning: Could not retrieve FPS from webcam, defaulting to {fps} FPS.")
     
+    # 화면 크기 설정: 카메라의 높이/너비를 가져온다
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
     print(f"Webcam opened with resolution: {width}x{height} at {fps} FPS.")
 
-    model = model_load("yolov8n.pt")
+    # 모델 로드
+    model_name = "yolo8n.pt"
+    model = model_load(model_name)
     if model is None:
-        print("Model loading failed. Exiting capture_frames.")
+        print(f"{model_name} model loading failed. Exiting capture_frames.")
         cap.release()
         cv2.destroyAllWindows()
         return
 
+    # 관련 변수 선언: frame/person_class_id/find_class
     frame_count = 0
     person_class_id = None
+    find_class = "person"
     for k, v in model.names.items():
-        if v == 'person':
+        if v == find_class:
             person_class_id = k
             break
     
