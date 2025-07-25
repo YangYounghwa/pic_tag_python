@@ -47,7 +47,7 @@ def draw_bounding_box(
     )
     return image
 
-def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path = None, web_link=None):
+def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path = None, web_link=None, max_fps=15):
     global global_image_sequence_counter
 
     if destination_folder is None:

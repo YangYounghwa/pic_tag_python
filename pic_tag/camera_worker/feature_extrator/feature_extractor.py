@@ -28,7 +28,8 @@ import queue
 from .resizePad import ResizePad
 
 def extract_features(frame_queue,feature_queue ):
-    
+    print("Feature extraction thread started.")
+    sleep(4) 
     print("Starting feature extraction thread...")  
     
     # Load the YOLOv11 ReID model
@@ -54,12 +55,13 @@ def extract_features(frame_queue,feature_queue ):
             # Mark the task as done
             frame_queue.task_done()
         except queue.Empty as e:
-            # print("Frame queue is empty, exiting feature extraction.")
+            print("Frame queue is empty, sleeping for a while...")
+            sleep(0.25)
             continue
 
         if frame_data is None:
-            # print("No more frames to process, exiting feature extraction.")
-            sleep(0.1)
+            print("No more frames to process, sleeping for a while...")
+            sleep(0.25)
             continue  # Skip if no frame data is available
         # Debug line to show which frame is being processed
 
