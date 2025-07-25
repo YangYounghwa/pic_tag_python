@@ -25,10 +25,13 @@ class IdentityLogger:
 
     def log(self, timestamp, person_id, embedding, bounding_box, file_path, camera_id):
         emb_str = ",".join(f"{x:.6f}" for x in embedding.tolist())
+        timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Format timestamp to string
+        bounding_box = bounding_box if bounding_box else (0, 0, 0, 0)
+        camera_id = camera_id if camera_id is not None else 0  # Default to
         with self.conn:
             self.conn.execute(
                 "INSERT INTO identity_log (timestamp, person_id, embedding, file_path, camera_id, bb_x1, bb_y1, bb_x2, bb_y2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (timestamp, person_id, emb_str, file_path, camera_id, *bounding_box)
+                (timestamp_str, person_id, emb_str, file_path, camera_id, *bounding_box)
             )
 
     def close(self):
