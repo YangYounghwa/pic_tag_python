@@ -22,7 +22,7 @@ import random
 import numpy as np
 import time
 import time
-
+import queue
 
 def extract_features(frame_queue,feature_queue ):
     
@@ -57,22 +57,33 @@ def extract_features(frame_queue,feature_queue ):
             sleep(0.1)
             continue  # Skip if no frame data is available
         # Debug line to show which frame is being processed
-        print(f"[{time.strftime('%H:%M:%S')}] Extracting features from frame: {frame_data['img_name']}")
-        image = frame_data["img"]
-        box = frame_data["bounding_box"]
-        timestamp = frame_data["timeStamp"]
+
+        print(f"[{time.strftime('%H:%M:%S')}] Extracting features from frame: {frame_data['file']}")
+        image = frame_data["cropped_image_rgb"]
+        x1 = frame_data["bb_x1"]
+        y1 = frame_data["bb_y1"]
+        x2 = frame_data["bb_x2"]
+        y2 = frame_data["bb_y2"]
+        timestamp = frame_data["timestamp"]
+        # track_id = frame_data["track_id"]  // not used in feature extraction
         cam_id = frame_data["camera_id"]
-        img_name = frame_data["img_name"]
+        image_filepath = frame_data["file_path"]
+        
         features = model3(image)
         features = features.cpu().numpy()
         features = features.flatten()
         feature_data = {
-            "features": features,
-            "bounding_box": box,
-            "timeStamp": timestamp,
+            "timestamp": timestamp,
+            "file_path": image_filepath,
             "camera_id": cam_id,
-            "img_name": img_name
+            "bb_x1": x1,
+            "bb_y1": y1,
+            "bb_x2": x2,
+            "bb_y2": y2,
+            "features": features,
         }
+
+
         feature_queue.put(feature_data)
         # Mark the task as done
         frame_queue.task_done()

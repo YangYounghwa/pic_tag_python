@@ -39,10 +39,28 @@ class IdentityEngine(threading.Thread):
                 
                 # Debug line
                 # print(f"[{time.strftime('%H:%M:%S')}] Processing feature data: {feature_data}" )
+        #               feature_data = {
+        #     "timestamp": timestamp,
+        #     "file_path": image_filepath,
+        #     "camera_id": cam_id,
+        #     "bb_x1": x1,
+        #     "bb_y1": y1,
+        #     "bb_x2": x2,
+        #     "bb_y2": y2,
+        #     "features": features,
+        # }
+                
                 embedding = feature_data["features"]
-                timestamp = feature_data["timeStamp"]
-                bounding_box = feature_data["bounding_box"]
-                file_path = feature_data["img_name"]
+                timestamp = feature_data["timestamp"]
+                x1 = feature_data["bb_x1"]
+                y1 = feature_data["bb_y1"]  
+                x2 = feature_data["bb_x2"]
+                y2 = feature_data["bb_y2"]
+                
+                bounding_box = (x1, y1, x2, y2)
+                file_path = feature_data["file_path"] 
+                
+                
                 camera_id = feature_data["camera_id"]  
                 embedding = np.array(embedding, dtype=np.float32)
                 if embedding.ndim == 1: 
