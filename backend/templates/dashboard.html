@@ -16,6 +16,7 @@
             background: #ffffff;
             color: #000000;
             line-height: 1.6;
+            overflow-x: hidden; /* 가로 스크롤 방지 */
         }
 
         /* 로그인 화면 */
@@ -61,7 +62,8 @@
             font-weight: 400;
         }
 
-        .form-group input {
+        .form-group input,
+        .form-group select {
             width: 100%;
             padding: 15px;
             border: 1px solid #e0e0e0;
@@ -70,7 +72,8 @@
             transition: border-color 0.3s ease;
         }
 
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group select:focus {
             border-color: #1a237e;
             outline: none;
         }
@@ -167,6 +170,8 @@
         .content-area {
             flex: 1;
             padding: 30px;
+            overflow-y: auto; /* 콘텐츠 영역에 스크롤 추가 */
+            max-height: calc(100vh - 80px); /* 헤더 높이만큼 제외 */
         }
 
         /* 페이지 타이틀 */
@@ -350,6 +355,172 @@
             color: #666666;
             font-size: 14px;
             font-weight: 400;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 5px;
+        }
+
+        .stat-change.positive {
+            color: #51cf66;
+        }
+
+        .stat-change.negative {
+            color: #ff6b6b;
+        }
+
+        .stat-change.neutral {
+            color: #666666;
+        }
+
+        /* 차트 컨테이너 */
+        .charts-container {
+            margin: 30px 0;
+        }
+
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            position: relative;
+            height: 300px; /* 고정 높이 추가 */
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 400;
+            margin: 0 0 15px 0;
+            color: #000000;
+        }
+
+        /* 로그 섹션 */
+        .log-section {
+            margin: 30px 0;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 400;
+            margin: 0 0 20px 0;
+            color: #000000;
+        }
+
+        .log-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .log-filter {
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            background: #ffffff;
+            font-size: 14px;
+        }
+
+        .refresh-btn {
+            padding: 8px 16px;
+            background: #1a237e;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #0d1766;
+        }
+
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            overflow-x: hidden; /* 가로 스크롤 방지 */
+        }
+
+        /* 인원 추적 섹션 */
+        .tracking-section {
+            margin: 30px 0;
+        }
+
+        .tracking-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .person-card {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .person-id {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1a237e;
+            margin-bottom: 8px;
+        }
+
+        .person-info {
+            font-size: 12px;
+            color: #666666;
+            margin-bottom: 5px;
+        }
+
+        .person-status {
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .person-status.active {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .person-status.inactive {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        /* 상태 표시 */
+        .status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        /* 반응형 */
+        @media (max-width: 1024px) {
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
         }
 
         .log-table {
@@ -555,6 +726,7 @@
             display: none;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <!-- 로그인 화면 -->
@@ -571,6 +743,16 @@
                     <label for="password">비밀번호</label>
                     <input type="password" id="password" name="password" required>
                 </div>
+                <div class="form-group" id="locationGroup">
+                    <label for="location">위치</label>
+                    <select id="location" name="location">
+                        <option value="">위치를 선택하세요 (관리자는 선택 안함)</option>
+                        <option value="entrance">현관 입구</option>
+                        <option value="parking">주차장</option>
+                        <option value="hallway">복도</option>
+                        <option value="emergency">비상구</option>
+                    </select>
+                </div>
                 <button type="submit" class="login-btn">로그인</button>
             </form>
         </div>
@@ -582,7 +764,6 @@
             <div class="logo">Pic-tag</div>
             <div class="user-info">
                 <span>관리자</span>
-                <button class="logout-btn" onclick="switchTheme('bootstrap')" style="margin-right: 10px;">Bootstrap 테마</button>
                 <button class="logout-btn" onclick="logout()">로그아웃</button>
             </div>
         </header>
@@ -603,10 +784,10 @@
                     <div class="video-layout">
                         <div class="main-video-area">
                             <div class="main-video">
-                                <div class="video-info">실시간 웹캠 - CAM01</div>
-                                <video id="mainWebcam" autoplay muted style="width: 100%; height: 100%; object-fit: cover;"></video>
-                                <div id="webcamError" style="display: none; color: white; text-align: center; padding: 20px;">
-                                    웹캠에 접근할 수 없습니다. 브라우저 설정을 확인해주세요.
+                                <div class="video-info" id="mainVideoInfo">카메라를 선택하세요</div>
+                                <video id="mainWebcam" autoplay muted style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                                <div id="mainVideoPlaceholder" style="color: white; text-align: center; padding: 20px; font-size: 18px;">
+                                    카메라를 선택하세요
                                 </div>
                             </div>
                             <div class="video-controls">
@@ -620,27 +801,21 @@
                         </div>
                         
                         <div class="camera-grid">
-                            <div class="camera-thumb active" onclick="selectCamera(this, '실시간 웹캠', 'CAM01')">
-                                <div class="thumb-video">
-                                    <video id="thumbWebcam1" autoplay muted style="width: 100%; height: 100%; object-fit: cover;"></video>
-                                </div>
-                                <div class="thumb-info">실시간 웹캠</div>
+                            <div class="camera-thumb" onclick="selectCamera(this, '현관 입구', 'entrance')">
+                                <div class="thumb-video" id="thumb-entrance">연결 대기중</div>
+                                <div class="thumb-info">현관 입구</div>
                             </div>
-                            <div class="camera-thumb" onclick="selectCamera(this, '웹캠 미러모드', 'CAM02')">
-                                <div class="thumb-video">
-                                    <video id="thumbWebcam2" autoplay muted style="width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);"></video>
-                                </div>
-                                <div class="thumb-info">웹캠 미러모드</div>
+                            <div class="camera-thumb" onclick="selectCamera(this, '주차장', 'parking')">
+                                <div class="thumb-video" id="thumb-parking">연결 대기중</div>
+                                <div class="thumb-info">주차장</div>
                             </div>
-                            <div class="camera-thumb" onclick="selectCamera(this, '시뮬레이션 카메라', 'CAM03')">
-                                <div class="thumb-video">Offline</div>
-                                <div class="thumb-info">시뮬레이션 카메라</div>
+                            <div class="camera-thumb" onclick="selectCamera(this, '복도', 'hallway')">
+                                <div class="thumb-video" id="thumb-hallway">연결 대기중</div>
+                                <div class="thumb-info">복도</div>
                             </div>
-                            <div class="camera-thumb" onclick="selectCamera(this, '웹캠 (흑백)', 'CAM04')">
-                                <div class="thumb-video">
-                                    <video id="thumbWebcam3" autoplay muted style="width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%);"></video>
-                                </div>
-                                <div class="thumb-info">웹캠 (흑백)</div>
+                            <div class="camera-thumb" onclick="selectCamera(this, '비상구', 'emergency')">
+                                <div class="thumb-video" id="thumb-emergency">연결 대기중</div>
+                                <div class="thumb-info">비상구</div>
                             </div>
                         </div>
                     </div>
@@ -710,74 +885,93 @@
                 <div id="statistics" class="section hidden">
                     <h1 class="page-title">통계 분석</h1>
                     
+                    <!-- 주요 지표 카드 -->
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="stat-value">142</div>
-                            <div class="stat-label">오늘 입장자 수</div>
+                            <div class="stat-value" id="todayDetections">142</div>
+                            <div class="stat-label">오늘 감지 수</div>
+                            <div class="stat-change positive">+12%</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-value">98</div>
-                            <div class="stat-label">오늘 퇴장자 수</div>
+                            <div class="stat-value" id="uniquePersons">28</div>
+                            <div class="stat-label">고유 인원 수</div>
+                            <div class="stat-change negative">-3%</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-value">44</div>
-                            <div class="stat-label">현재 체류 인원</div>
+                            <div class="stat-value" id="activeCameras">4</div>
+                            <div class="stat-label">활성 카메라</div>
+                            <div class="stat-change neutral">0%</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-value">25분</div>
-                            <div class="stat-label">평균 체류시간</div>
+                            <div class="stat-value" id="avgConfidence">94.2%</div>
+                            <div class="stat-label">평균 신뢰도</div>
+                            <div class="stat-change positive">+2.1%</div>
                         </div>
                     </div>
 
-                    <h2 style="margin: 30px 0 20px 0; font-size: 18px; font-weight: 400;">사용자 입출 로그</h2>
-                    <table class="log-table">
-                        <thead>
-                            <tr>
-                                <th>시간</th>
-                                <th>구분</th>
-                                <th>위치</th>
-                                <th>체류시간</th>
-                                <th>상태</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>14:30:41</td>
-                                <td>입장</td>
-                                <td>현관 입구</td>
-                                <td>-</td>
-                                <td>진행중</td>
-                            </tr>
-                            <tr>
-                                <td>14:25:15</td>
-                                <td>퇴장</td>
-                                <td>현관 입구</td>
-                                <td>1시간 15분</td>
-                                <td>완료</td>
-                            </tr>
-                            <tr>
-                                <td>14:20:32</td>
-                                <td>입장</td>
-                                <td>현관 입구</td>
-                                <td>-</td>
-                                <td>진행중</td>
-                            </tr>
-                            <tr>
-                                <td>14:15:48</td>
-                                <td>퇴장</td>
-                                <td>비상구</td>
-                                <td>45분</td>
-                                <td>완료</td>
-                            </tr>
-                            <tr>
-                                <td>14:10:22</td>
-                                <td>입장</td>
-                                <td>현관 입구</td>
-                                <td>-</td>
-                                <td>진행중</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <!-- 차트 섹션 -->
+                    <div class="charts-container">
+                        <div class="chart-row">
+                            <div class="chart-container">
+                                <h3 class="chart-title">시간대별 감지 현황</h3>
+                                <canvas id="hourlyChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <h3 class="chart-title">카메라별 감지 분포</h3>
+                                <canvas id="cameraChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-row">
+                            <div class="chart-container">
+                                <h3 class="chart-title">주간 감지 추이</h3>
+                                <canvas id="weeklyChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <h3 class="chart-title">신뢰도 분포</h3>
+                                <canvas id="confidenceChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 실시간 로그 테이블 -->
+                    <div class="log-section">
+                        <h2 class="section-title">실시간 감지 로그</h2>
+                        <div class="log-controls">
+                            <select id="logFilter" class="log-filter">
+                                <option value="all">전체</option>
+                                <option value="entrance">현관 입구</option>
+                                <option value="parking">주차장</option>
+                                <option value="hallway">복도</option>
+                                <option value="emergency">비상구</option>
+                            </select>
+                            <button class="refresh-btn" onclick="refreshLogs()">새로고침</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="log-table" id="identityLogTable">
+                                <thead>
+                                    <tr>
+                                        <th>시간</th>
+                                        <th>인원 ID</th>
+                                        <th>카메라</th>
+                                        <th>위치</th>
+                                        <th>신뢰도</th>
+                                        <th>상태</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logTableBody">
+                                    <!-- 동적으로 생성될 로그 데이터 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 인원 추적 현황 -->
+                    <div class="tracking-section">
+                        <h2 class="section-title">인원 추적 현황</h2>
+                        <div class="tracking-grid" id="trackingGrid">
+                            <!-- 동적으로 생성될 인원 카드들 -->
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 시스템 설정 -->
@@ -847,17 +1041,57 @@
     </div>
 
     <script>
+        // 전역 변수에 현재 위치 정보 저장
+        let currentLocation = '';
+        let locationName = '';
+        let userLocations = {}; // 사용자별 위치 정보 저장
+        
+        // 사용자 위치 정보 관리 함수
+        function getUserLocationById(userId) {
+            return userLocations[userId]?.location || 'unknown';
+        }
+        
+        function getLocationNameById(userId) {
+            return userLocations[userId]?.locationName || '알 수 없음';
+        }
+        
+        function setUserLocation(userId, location, locationName) {
+            userLocations[userId] = { location, locationName };
+        }
+        
         // 로그인 처리
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            const location = document.getElementById('location').value;
             
+            // 통합 관리 계정 (모든 CCTV 볼 수 있음)
             if (username === 'admin' && password === 'admin123') {
+                currentLocation = 'admin';
+                locationName = '통합 관리자';
+                showDashboard();
+                return;
+            }
+            
+            // 위치별 로그인 계정
+            const validLogins = {
+                'entrance': { username: 'entrance', password: 'entrance123', name: '현관 입구' },
+                'parking': { username: 'parking', password: 'parking123', name: '주차장' },
+                'hallway': { username: 'hallway', password: 'hallway123', name: '복도' },
+                'emergency': { username: 'emergency', password: 'emergency123', name: '비상구' }
+            };
+            
+            if (location && validLogins[location] && 
+                username === validLogins[location].username && 
+                password === validLogins[location].password) {
+                
+                currentLocation = location;
+                locationName = validLogins[location].name;
                 showDashboard();
             } else {
-                alert('잘못된 사용자명 또는 비밀번호입니다.');
+                alert('잘못된 로그인 정보이거나 위치가 선택되지 않았습니다.');
             }
         });
 
@@ -867,6 +1101,15 @@
             document.getElementById('dashboardPage').style.display = 'none';
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
+            document.getElementById('location').value = '';
+            
+            // 웹캠 중지
+            stopWebcam();
+            
+            // WebSocket 연결 종료
+            if (socket) {
+                socket.close();
+            }
         }
 
         // 섹션 표시
@@ -879,6 +1122,16 @@
             const menuItems = document.querySelectorAll('.menu-item');
             menuItems.forEach(item => item.classList.remove('active'));
             event.target.classList.add('active');
+
+            // 통계 페이지 초기화
+            if (sectionName === 'statistics') {
+                setTimeout(() => {
+                    initializeCharts();
+                    updateLogTable();
+                    updateTrackingGrid();
+                    refreshLogs();
+                }, 100);
+            }
         }
 
         // 카메라 선택
@@ -890,18 +1143,44 @@
             const videoInfo = document.querySelector('.video-info');
             videoInfo.textContent = `${location} - ${camId}`;
             
-            // 클릭한 썸네일의 비디오 스트림을 메인 비디오로 전환
-            const thumbVideo = element.querySelector('video');
             const mainVideo = document.getElementById('mainWebcam');
             
-            if (thumbVideo && mainVideo && thumbVideo.srcObject) {
-                // 클릭한 썸네일의 스트림을 메인 비디오에 적용
-                mainVideo.srcObject = thumbVideo.srcObject;
-                console.log(`메인 비디오가 ${location}로 전환되었습니다.`);
-            } else if (camId === 'CAM01' && webcamStream) {
-                // CAM01 (실시간 웹캠)인 경우 로컬 웹캠 스트림 사용
+            if (webcamStream && mainVideo) {
+                // 메인 비디오에 웹캠 스트림 적용
                 mainVideo.srcObject = webcamStream;
-                console.log('메인 비디오가 로컬 웹캠으로 전환되었습니다.');
+                
+                // 각 카메라 타입에 따라 다른 스타일 적용
+                switch(camId) {
+                    case 'CAM01': // 실시간 웹캠
+                        mainVideo.style.transform = '';
+                        mainVideo.style.filter = '';
+                        break;
+                    case 'CAM02': // 웹캠 미러모드
+                        mainVideo.style.transform = 'scaleX(-1)';
+                        mainVideo.style.filter = '';
+                        break;
+                    case 'CAM03': // 시뮬레이션 카메라 (오프라인)
+                        mainVideo.srcObject = null;
+                        mainVideo.style.transform = '';
+                        mainVideo.style.filter = '';
+                        break;
+                    case 'CAM04': // 웹캠 (흑백)
+                        mainVideo.style.transform = '';
+                        mainVideo.style.filter = 'grayscale(100%)';
+                        break;
+                    default: // 원격 사용자 스트림
+                        if (camId.startsWith('REMOTE_')) {
+                            const userId = camId.replace('REMOTE_', '');
+                            if (remoteStreams[userId]) {
+                                mainVideo.srcObject = remoteStreams[userId];
+                                mainVideo.style.transform = '';
+                                mainVideo.style.filter = '';
+                            }
+                        }
+                        break;
+                }
+                
+                console.log(`메인 비디오가 ${location}로 전환되었습니다.`);
             }
         }
 
@@ -997,6 +1276,21 @@
         // 웹캠 초기화 함수
         async function initWebcam() {
             try {
+                // 브라우저 보안 확인
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('브라우저에서 웹캠을 지원하지 않습니다.');
+                }
+
+                // HTTPS 연결 확인 (localhost 제외)
+                if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                    console.warn('HTTP 연결에서 웹캠 접근이 제한될 수 있습니다.');
+                    // Chrome의 경우 insecure origins에서 webcam 접근을 차단
+                    if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
+                        showWebcamError('Chrome에서는 HTTPS 연결이 필요합니다.<br>또는 브라우저 설정에서 이 사이트를 안전한 사이트로 추가하세요.<br><br><strong>해결방법:</strong><br>1. Chrome 주소창에 chrome://flags/#unsafely-treat-insecure-origin-as-secure 입력<br>2. 이 사이트 주소를 추가하고 재시작');
+                        return;
+                    }
+                }
+
                 const constraints = {
                     video: {
                         width: { ideal: 1280 },
@@ -1006,52 +1300,51 @@
                     audio: false
                 };
 
+                console.log('웹캠 권한 요청 중...');
                 webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
                 
-                // 메인 웹캠 비디오에 스트림 연결
-                const mainWebcam = document.getElementById('mainWebcam');
-                if (mainWebcam) {
-                    mainWebcam.srcObject = webcamStream;
-                    mainWebcam.style.display = 'block';
-                }
-
-                // 썸네일 웹캠들에도 같은 스트림 연결
-                const thumbWebcams = ['thumbWebcam1', 'thumbWebcam2', 'thumbWebcam3'];
-                thumbWebcams.forEach(id => {
-                    const video = document.getElementById(id);
-                    if (video) {
-                        video.srcObject = webcamStream;
-                    }
-                });
-
                 isWebcamActive = true;
-                console.log('웹캠이 성공적으로 초기화되었습니다.');
+                console.log(`웹캠이 성공적으로 초기화되었습니다. 위치: ${locationName}`);
 
-                // 웹캠 에러 메시지 숨기기
-                const errorDiv = document.getElementById('webcamError');
-                if (errorDiv) {
-                    errorDiv.style.display = 'none';
-                }
+                // 성공 메시지 표시
+                showWebcamSuccess();
 
             } catch (error) {
                 console.error('웹캠 접근 오류:', error);
-                
-                // 에러 메시지 표시
-                const errorDiv = document.getElementById('webcamError');
-                const mainWebcam = document.getElementById('mainWebcam');
-                
-                if (errorDiv && mainWebcam) {
-                    mainWebcam.style.display = 'none';
-                    errorDiv.style.display = 'block';
-                    
-                    if (error.name === 'NotAllowedError') {
-                        errorDiv.innerHTML = '웹캠 접근이 거부되었습니다.<br>브라우저 설정에서 카메라 권한을 허용해주세요.';
-                    } else if (error.name === 'NotFoundError') {
-                        errorDiv.innerHTML = '카메라를 찾을 수 없습니다.<br>카메라가 연결되어 있는지 확인해주세요.';
-                    } else {
-                        errorDiv.innerHTML = '웹캠에 접근할 수 없습니다.<br>다른 프로그램에서 카메라를 사용 중일 수 있습니다.';
-                    }
-                }
+                handleWebcamError(error);
+            }
+        }
+
+        // 웹캠 에러 처리
+        function handleWebcamError(error) {
+            let errorMessage = '웹캠에 접근할 수 없습니다.';
+            
+            if (error.name === 'NotAllowedError') {
+                errorMessage = '웹캠 접근이 거부되었습니다.<br><br><strong>해결방법:</strong><br>1. 브라우저 주소창의 카메라 아이콘 클릭<br>2. "허용"으로 변경<br>3. 페이지 새로고침';
+            } else if (error.name === 'NotFoundError') {
+                errorMessage = '카메라를 찾을 수 없습니다.<br>카메라가 연결되어 있는지 확인해주세요.';
+            } else if (error.name === 'NotSupportedError') {
+                errorMessage = 'HTTPS 연결이 필요합니다.<br>또는 브라우저에서 웹캠을 지원하지 않습니다.';
+            } else {
+                errorMessage = `웹캠 오류: ${error.message}<br><br>다른 프로그램에서 카메라를 사용 중일 수 있습니다.`;
+            }
+            
+            showWebcamError(errorMessage);
+        }
+
+        // 웹캠 에러 메시지 표시
+        function showWebcamError(message) {
+            const placeholder = document.getElementById('mainVideoPlaceholder');
+            if (placeholder) {
+                placeholder.innerHTML = `<div style="color: #ff6b6b; padding: 20px; font-size: 14px; line-height: 1.5;">${message}</div>`;
+            }
+        }
+
+        // 웹캠 성공 메시지 표시
+        function showWebcamSuccess() {
+            const placeholder = document.getElementById('mainVideoPlaceholder');
+            if (placeholder) {
+                placeholder.innerHTML = `<div style="color: #51cf66; padding: 20px; font-size: 16px;">${locationName} 웹캠이 활성화되었습니다.<br>다른 사용자들이 이 카메라를 볼 수 있습니다.</div>`;
             }
         }
 
@@ -1222,6 +1515,12 @@
             
             socket.onopen = function(event) {
                 console.log('WebSocket 연결됨');
+                // 위치 정보 전송
+                socket.send(JSON.stringify({
+                    type: 'location_info',
+                    location: currentLocation,
+                    location_name: locationName
+                }));
             };
             
             socket.onmessage = function(event) {
@@ -1231,7 +1530,11 @@
             
             socket.onclose = function(event) {
                 console.log('WebSocket 연결 종료');
-                setTimeout(initWebSocket, 3000); // 3초 후 재연결 시도
+                setTimeout(() => {
+                    if (document.getElementById('dashboardPage').style.display !== 'none') {
+                        initWebSocket(); // 대시보드가 표시 중일 때만 재연결
+                    }
+                }, 3000);
             };
             
             socket.onerror = function(error) {
@@ -1245,8 +1548,19 @@
             
             switch(data.type) {
                 case 'user_joined':
-                    console.log('새 사용자 입장:', data.user_id);
-                    await createPeerConnection(data.user_id);
+                    console.log('새 사용자 입장:', data.user_id, '위치:', data.location_name);
+                    if (data.location && data.location !== currentLocation) {
+                        setUserLocation(data.user_id, data.location, data.location_name);
+                        await createPeerConnection(data.user_id, data.location, data.location_name);
+                    }
+                    break;
+                    
+                case 'location_updated':
+                    console.log('사용자 위치 업데이트:', data.user_id, '위치:', data.location_name);
+                    if (data.location && data.location !== currentLocation) {
+                        setUserLocation(data.user_id, data.location, data.location_name);
+                        await createPeerConnection(data.user_id, data.location, data.location_name);
+                    }
                     break;
                     
                 case 'user_left':
@@ -1269,10 +1583,15 @@
         }
         
         // Peer Connection 생성
-        async function createPeerConnection(userId) {
+        async function createPeerConnection(userId, userLocation, locationName) {
             try {
+                console.log(`Peer Connection 생성: ${userId} (${locationName})`);
                 const peerConnection = new RTCPeerConnection(iceServers);
                 peerConnections[userId] = peerConnection;
+                
+                // 사용자 위치 정보 저장
+                peerConnections[userId].userLocation = userLocation;
+                peerConnections[userId].locationName = locationName;
                 
                 // ICE Candidate 이벤트
                 peerConnection.onicecandidate = function(event) {
@@ -1287,16 +1606,17 @@
                 
                 // Remote Stream 이벤트
                 peerConnection.ontrack = function(event) {
-                    console.log('Remote stream 받음:', userId);
+                    console.log('Remote stream 받음:', userId, locationName);
                     remoteStreams[userId] = event.streams[0];
-                    displayRemoteStream(userId, event.streams[0]);
+                    displayRemoteStream(userId, event.streams[0], userLocation, locationName);
                 };
                 
-                // 내 스트림 추가
-                if (webcamStream) {
+                // 내 스트림 추가 (위치 기반 사용자만)
+                if (webcamStream && currentLocation !== 'admin') {
                     webcamStream.getTracks().forEach(track => {
                         peerConnection.addTrack(track, webcamStream);
                     });
+                    console.log('내 웹캠 스트림 추가됨');
                 }
                 
                 // Offer 생성 및 전송
@@ -1317,6 +1637,7 @@
         // Offer 처리
         async function handleOffer(data) {
             try {
+                console.log('Offer 받음:', data.from_user);
                 const peerConnection = new RTCPeerConnection(iceServers);
                 peerConnections[data.from_user] = peerConnection;
                 
@@ -1333,16 +1654,20 @@
                 
                 // Remote Stream 이벤트
                 peerConnection.ontrack = function(event) {
-                    console.log('Remote stream 받음:', data.from_user);
+                    console.log('Remote stream 받음 (Offer 응답):', data.from_user);
                     remoteStreams[data.from_user] = event.streams[0];
-                    displayRemoteStream(data.from_user, event.streams[0]);
+                    // 위치 정보는 별도로 관리되어야 함
+                    const userLocation = getUserLocationById(data.from_user);
+                    const locationName = getLocationNameById(data.from_user);
+                    displayRemoteStream(data.from_user, event.streams[0], userLocation, locationName);
                 };
                 
-                // 내 스트림 추가
-                if (webcamStream) {
+                // 내 스트림 추가 (위치 기반 사용자만)
+                if (webcamStream && currentLocation !== 'admin') {
                     webcamStream.getTracks().forEach(track => {
                         peerConnection.addTrack(track, webcamStream);
                     });
+                    console.log('내 웹캠 스트림 추가됨 (Answer)');
                 }
                 
                 // Offer 설정 및 Answer 생성
@@ -1386,26 +1711,29 @@
         }
         
         // Remote Stream 표시
-        function displayRemoteStream(userId, stream) {
-            // 카메라 썸네일에 원격 스트림 표시
-            const thumbnails = document.querySelectorAll('.camera-thumb');
-            const availableThumb = Array.from(thumbnails).find(thumb => {
-                const video = thumb.querySelector('video');
-                return video && !video.srcObject;
-            });
+        function displayRemoteStream(userId, stream, userLocation, locationName) {
+            console.log(`원격 스트림 표시: ${userId}, 위치: ${locationName}`);
             
-            if (availableThumb) {
-                const video = availableThumb.querySelector('video');
-                if (video) {
-                    video.srcObject = stream;
-                    const infoDiv = availableThumb.querySelector('.thumb-info');
-                    if (infoDiv) {
-                        infoDiv.textContent = `사용자 ${userId}`;
-                    }
-                    
-                    // 썸네일 클릭 이벤트 업데이트 (원격 사용자 스트림용)
-                    availableThumb.setAttribute('onclick', `selectCamera(this, '사용자 ${userId}', 'REMOTE_${userId}')`);
-                }
+            // 해당 위치의 썸네일 찾기
+            const thumbElement = document.getElementById(`thumb-${userLocation}`);
+            if (thumbElement) {
+                // 기존 내용 제거하고 비디오 요소 생성
+                thumbElement.innerHTML = '';
+                const video = document.createElement('video');
+                video.autoplay = true;
+                video.muted = true;
+                video.srcObject = stream;
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.objectFit = 'cover';
+                
+                thumbElement.appendChild(video);
+                
+                // 썸네일 활성화 표시
+                const thumbContainer = thumbElement.parentElement;
+                thumbContainer.classList.add('active');
+                
+                console.log(`${locationName} 카메라 스트림 연결됨`);
             }
         }
         
@@ -1439,12 +1767,259 @@
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('dashboardPage').style.display = 'block';
             
+            // 사용자 정보 업데이트
+            const userInfo = document.querySelector('.user-info span');
+            if (userInfo) {
+                userInfo.textContent = locationName || '관리자';
+            }
+            
             // 웹캠 및 WebSocket 초기화
             setTimeout(async () => {
-                await initWebcam();
+                // 위치 기반 사용자(관리자 제외)는 웹캠 시작
+                if (currentLocation !== 'admin') {
+                    await initWebcam();
+                }
                 initWebSocket();
             }, 1000);
         }
+
+        // === 통계 데이터 및 차트 ===
+        
+        // identity_log 테이블 구조를 기반으로 한 하드코딩 데이터
+        const identityLogs = [
+            {id: 1, timestamp: '2025-01-25 14:32:15', person_id: 1001, embedding: '[0.1,0.2,...]', file_path: '/captures/img_001.jpg', camera_id: 1, bb_x1: 120, bb_y1: 80, bb_x2: 220, bb_y2: 280},
+            {id: 2, timestamp: '2025-01-25 14:31:45', person_id: 1002, embedding: '[0.3,0.4,...]', file_path: '/captures/img_002.jpg', camera_id: 2, bb_x1: 150, bb_y1: 90, bb_x2: 250, bb_y2: 290},
+            {id: 3, timestamp: '2025-01-25 14:30:20', person_id: 1001, embedding: '[0.1,0.2,...]', file_path: '/captures/img_003.jpg', camera_id: 3, bb_x1: 110, bb_y1: 75, bb_x2: 210, bb_y2: 275},
+            {id: 4, timestamp: '2025-01-25 14:29:55', person_id: 1003, embedding: '[0.5,0.6,...]', file_path: '/captures/img_004.jpg', camera_id: 1, bb_x1: 130, bb_y1: 85, bb_x2: 230, bb_y2: 285},
+            {id: 5, timestamp: '2025-01-25 14:28:30', person_id: 1004, embedding: '[0.7,0.8,...]', file_path: '/captures/img_005.jpg', camera_id: 4, bb_x1: 140, bb_y1: 95, bb_x2: 240, bb_y2: 295},
+            {id: 6, timestamp: '2025-01-25 14:27:10', person_id: 1002, embedding: '[0.3,0.4,...]', file_path: '/captures/img_006.jpg', camera_id: 2, bb_x1: 155, bb_y1: 92, bb_x2: 255, bb_y2: 292},
+            {id: 7, timestamp: '2025-01-25 14:25:45', person_id: 1005, embedding: '[0.9,1.0,...]', file_path: '/captures/img_007.jpg', camera_id: 1, bb_x1: 125, bb_y1: 82, bb_x2: 225, bb_y2: 282},
+            {id: 8, timestamp: '2025-01-25 14:24:20', person_id: 1001, embedding: '[0.1,0.2,...]', file_path: '/captures/img_008.jpg', camera_id: 3, bb_x1: 115, bb_y1: 78, bb_x2: 215, bb_y2: 278},
+            {id: 9, timestamp: '2025-01-25 14:22:55', person_id: 1006, embedding: '[1.1,1.2,...]', file_path: '/captures/img_009.jpg', camera_id: 2, bb_x1: 160, bb_y1: 88, bb_x2: 260, bb_y2: 288},
+            {id: 10, timestamp: '2025-01-25 14:21:30', person_id: 1003, embedding: '[0.5,0.6,...]', file_path: '/captures/img_010.jpg', camera_id: 4, bb_x1: 135, bb_y1: 87, bb_x2: 235, bb_y2: 287}
+        ];
+
+        const cameraNames = {
+            1: '현관 입구',
+            2: '주차장', 
+            3: '복도',
+            4: '비상구'
+        };
+
+        let charts = {};
+
+        // 차트 초기화
+        function initializeCharts() {
+            // 기존 차트가 있으면 제거
+            Object.keys(charts).forEach(key => {
+                if (charts[key]) {
+                    charts[key].destroy();
+                }
+            });
+            charts = {};
+
+            // 시간대별 감지 현황 차트
+            const hourlyCtx = document.getElementById('hourlyChart');
+            if (hourlyCtx) {
+                charts.hourly = new Chart(hourlyCtx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                        datasets: [{
+                            label: '감지 수',
+                            data: [2, 1, 15, 32, 28, 12],
+                            borderColor: '#1a237e',
+                            backgroundColor: 'rgba(26, 35, 126, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 카메라별 감지 분포 차트
+            const cameraCtx = document.getElementById('cameraChart');
+            if (cameraCtx) {
+                const cameraData = getCameraDistribution();
+                charts.camera = new Chart(cameraCtx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.values(cameraNames),
+                        datasets: [{
+                            data: cameraData,
+                            backgroundColor: ['#1a237e', '#3f51b5', '#7986cb', '#c5cae9']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            // 주간 감지 추이 차트
+            const weeklyCtx = document.getElementById('weeklyChart');
+            if (weeklyCtx) {
+                charts.weekly = new Chart(weeklyCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['월', '화', '수', '목', '금', '토', '일'],
+                        datasets: [{
+                            label: '일별 감지 수',
+                            data: [45, 52, 38, 67, 73, 28, 15],
+                            backgroundColor: '#1a237e'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 신뢰도 분포 차트
+            const confidenceCtx = document.getElementById('confidenceChart');
+            if (confidenceCtx) {
+                charts.confidence = new Chart(confidenceCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['90-95%', '95-98%', '98-99%', '99-100%'],
+                        datasets: [{
+                            label: '감지 건수',
+                            data: [12, 35, 67, 28],
+                            backgroundColor: ['#ff6b6b', '#feca57', '#48dbfb', '#0abde3']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 카메라별 감지 분포 계산
+        function getCameraDistribution() {
+            const distribution = [0, 0, 0, 0];
+            identityLogs.forEach(log => {
+                if (log.camera_id >= 1 && log.camera_id <= 4) {
+                    distribution[log.camera_id - 1]++;
+                }
+            });
+            return distribution;
+        }
+
+        // 로그 테이블 업데이트
+        function updateLogTable(filterCamera = 'all') {
+            const tbody = document.getElementById('logTableBody');
+            tbody.innerHTML = '';
+
+            let filteredLogs = identityLogs;
+            if (filterCamera !== 'all') {
+                const cameraId = getCameraIdByLocation(filterCamera);
+                filteredLogs = identityLogs.filter(log => log.camera_id === cameraId);
+            }
+
+            filteredLogs.slice(0, 20).forEach(log => {
+                const row = document.createElement('tr');
+                const confidence = (Math.random() * 10 + 90).toFixed(1); // 90-100% 랜덤 신뢰도
+                const status = Math.random() > 0.8 ? 'error' : 'success';
+                
+                row.innerHTML = `
+                    <td>${formatTimestamp(log.timestamp)}</td>
+                    <td>Person-${log.person_id}</td>
+                    <td>CAM-${log.camera_id}</td>
+                    <td>${cameraNames[log.camera_id]}</td>
+                    <td>${confidence}%</td>
+                    <td><span class="status ${status}">${status === 'success' ? '정상' : '오류'}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 인원 추적 현황 업데이트
+        function updateTrackingGrid() {
+            const grid = document.getElementById('trackingGrid');
+            grid.innerHTML = '';
+
+            const uniquePersons = [...new Set(identityLogs.map(log => log.person_id))];
+            
+            uniquePersons.forEach(personId => {
+                const personLogs = identityLogs.filter(log => log.person_id === personId);
+                const latestLog = personLogs[0];
+                const isActive = Math.random() > 0.5;
+                
+                const card = document.createElement('div');
+                card.className = 'person-card';
+                card.innerHTML = `
+                    <div class="person-id">Person-${personId}</div>
+                    <div class="person-info">마지막 감지: ${formatTimestamp(latestLog.timestamp)}</div>
+                    <div class="person-info">위치: ${cameraNames[latestLog.camera_id]}</div>
+                    <div class="person-info">감지 횟수: ${personLogs.length}회</div>
+                    <div class="person-status ${isActive ? 'active' : 'inactive'}">
+                        ${isActive ? '활성' : '비활성'}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // 유틸리티 함수들
+        function formatTimestamp(timestamp) {
+            return new Date(timestamp).toLocaleTimeString('ko-KR');
+        }
+
+        function getCameraIdByLocation(location) {
+            const locationMap = {
+                'entrance': 1,
+                'parking': 2,
+                'hallway': 3,
+                'emergency': 4
+            };
+            return locationMap[location] || 1;
+        }
+
+        // 로그 새로고침
+        function refreshLogs() {
+            const filter = document.getElementById('logFilter').value;
+            updateLogTable(filter);
+            updateTrackingGrid();
+            
+            // 통계 카드 업데이트
+            document.getElementById('todayDetections').textContent = identityLogs.length;
+            document.getElementById('uniquePersons').textContent = [...new Set(identityLogs.map(log => log.person_id))].length;
+            document.getElementById('activeCameras').textContent = [...new Set(identityLogs.map(log => log.camera_id))].length;
+            document.getElementById('avgConfidence').textContent = '94.2%';
+        }
+
+        // 로그 필터 이벤트
+        document.addEventListener('DOMContentLoaded', function() {
+            const logFilter = document.getElementById('logFilter');
+            if (logFilter) {
+                logFilter.addEventListener('change', function() {
+                    updateLogTable(this.value);
+                });
+            }
+        });
 
         // 키보드 단축키
         document.addEventListener('keydown', function(e) {

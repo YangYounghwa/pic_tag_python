@@ -7,6 +7,8 @@ class VideoCallConsumer(AsyncWebsocketConsumer):
         super().__init__(*args, **kwargs)
         self.room_group_name = "video_call_room"
         self.user_id = None
+        self.location = None
+        self.location_name = None
 
     async def connect(self):
         self.user_id = str(uuid.uuid4())[:8]
@@ -23,6 +25,8 @@ class VideoCallConsumer(AsyncWebsocketConsumer):
             {
                 'type': 'user_joined',
                 'user_id': self.user_id,
+                'location': self.location,
+                'location_name': self.location_name,
                 'message': f'User {self.user_id} joined'
             }
         )
@@ -47,7 +51,23 @@ class VideoCallConsumer(AsyncWebsocketConsumer):
             data = json.loads(text_data)
             message_type = data.get('type')
             
-            if message_type == 'offer':
+            if message_type == 'location_info':
+                self.location = data.get('location')
+                self.location_name = data.get('location_name')
+                print(f"User {self.user_id} 위치 정보 업데이트: {self.location_name}")
+                
+                # 다른 사용자들에게 위치 정보 알림
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'location_updated',
+                        'user_id': self.user_id,
+                        'location': self.location,
+                        'location_name': self.location_name
+                    }
+                )
+                
+            elif message_type == 'offer':
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
@@ -93,6 +113,8 @@ class VideoCallConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({
                 'type': 'user_joined',
                 'user_id': event['user_id'],
+                'location': event.get('location'),
+                'location_name': event.get('location_name'),
                 'message': event['message']
             }))
 
@@ -101,7 +123,18 @@ class VideoCallConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({
                 'type': 'user_left',
                 'user_id': event['user_id'],
+                'location': event.get('location'),
+                'location_name': event.get('location_name'),
                 'message': event['message']
+            }))
+
+    async def location_updated(self, event):
+        if event['user_id'] != self.user_id:
+            await self.send(text_data=json.dumps({
+                'type': 'location_updated',
+                'user_id': event['user_id'],
+                'location': event['location'],
+                'location_name': event['location_name']
             }))
 
     async def webrtc_message(self, event):

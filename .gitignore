@@ -11,3 +11,10 @@ __pycache__/
 *.log
 detected_images/
 *.pt
+
+# 보안 파일들
+*.pem
+*.key
+*.crt
+.env
+local_settings.py
