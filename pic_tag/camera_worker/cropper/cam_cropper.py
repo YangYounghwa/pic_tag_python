@@ -6,6 +6,8 @@ import datetime
 import queue
 import threading
 
+from pathlib import Path
+
 # --- 모든 저장 이미지를 위한 전역 순차 번호 카운터 ---
 global_image_sequence_counter = 0
 
@@ -45,14 +47,18 @@ def draw_bounding_box(
     )
     return image
 
-
-def capture_frames(cam_num, person_data_queue_instance, web_link=None):
+def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path = None, web_link=None):
     global global_image_sequence_counter
 
-    main_data_folder = "data"
+    if destination_folder is None:
+        destination_folder = Path("../data")
+    main_data_folder = destination_folder
+    if not main_data_folder.exists():
+        print(f"Destination folder {main_data_folder} does not exist. Creating it.")
+        main_data_folder.mkdir(parents=True, exist_ok=True)
     sub_data_folder = "img"
     main_data_folder_path = main_data_folder
-    sub_data_folder_path = os.path.join(main_data_folder, sub_data_folder)
+    sub_data_folder_path = main_data_folder / sub_data_folder
     make_folder(main_data_folder_path)
     make_folder(sub_data_folder_path)
 
@@ -99,7 +105,8 @@ def capture_frames(cam_num, person_data_queue_instance, web_link=None):
             break
 
         current_time_dt = datetime.datetime.now()
-        timestamp_str = current_time_dt.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        timestamp=current_time_dt  
+        #timestamp_str = current_time_dt.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
         # --- 객체 탐지 및 트래킹 ---
         results = model.track(
@@ -165,7 +172,7 @@ def capture_frames(cam_num, person_data_queue_instance, web_link=None):
                                 image_filepath = None
 
                         person_detection_data = {
-                            "timestamp": timestamp_str,
+                            "timestamp": timestamp,
                             "person_id": track_id,
                             "file_path": image_filepath,
                             "cropped_image_rgb": cropped_image_rgb, # <--- 추가: RGB 이미지 데이터
@@ -180,7 +187,7 @@ def capture_frames(cam_num, person_data_queue_instance, web_link=None):
                         try:
                             person_data_queue_instance.put(person_detection_data, block=False)
                         except queue.Full:
-                            print(f"Person data queue full, skipping data for person ID {track_id} at {timestamp_str}")
+                            print(f"Person data queue full, skipping data for person ID {track_id} at {timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}")
 
         
 

@@ -16,19 +16,12 @@ class IdentityEngine(threading.Thread):
         self.max_history = max_history
         self.max_age_sec = max_age_sec
 
-        self.recent_data = deque()  # (timestamp, embedding, person_id)
+        self.recent_data = deque()  #
         self.person_counter = 0
         self.lock = threading.Lock()
         self.running = True
         
-        # feature_data = {
-        #     "features": features,
-        #     "bounding_box": box,
-        #     "timeStamp": timestamp,
-        #     "camera_id": cam_id,
-        #     "img_name": img_name
-        # }
-        # feature_queue.put(feature_data)
+  
 
     def run(self):
         while self.running:
@@ -37,18 +30,7 @@ class IdentityEngine(threading.Thread):
                 if not feature_data:
                     continue
                 
-                # Debug line
-                # print(f"[{time.strftime('%H:%M:%S')}] Processing feature data: {feature_data}" )
-        #               feature_data = {
-        #     "timestamp": timestamp,
-        #     "file_path": image_filepath,
-        #     "camera_id": cam_id,
-        #     "bb_x1": x1,
-        #     "bb_y1": y1,
-        #     "bb_x2": x2,
-        #     "bb_y2": y2,
-        #     "features": features,
-        # }
+
                 
                 embedding = feature_data["features"]
                 timestamp = feature_data["timestamp"]
@@ -87,7 +69,7 @@ class IdentityEngine(threading.Thread):
         with self.lock:
             self._clean_old_entries(timestamp)
             if not self.recent_data:
-                pid = self._create_new_identity(embedding, timestamp)
+                pid = self._create_new_identity(embedding, timestamp, bounding_box, file_path, camera_id)
                 return pid
 
             embs = np.stack([e for _, e, _ in self.recent_data])
@@ -110,16 +92,16 @@ class IdentityEngine(threading.Thread):
                 # log(self, timestamp, person_id, embedding, bounding_box, file_path, camera_id)
                 return best_pid
             else:
-                return self._create_new_identity(embedding, timestamp)
+                return self._create_new_identity(embedding, timestamp,bounding_box, file_path, camera_id)
 
-    def _create_new_identity(self, embedding, timestamp):
+    def _create_new_identity(self, embedding, timestamp, bounding_box, file_path, camera_id=None):
         self.person_counter += 1
         pid = self.person_counter
         self.recent_data.append((timestamp, embedding, pid))
         if len(self.recent_data) > self.max_history:
             self.recent_data.popleft()
         if self.logger:
-            self.logger.log(timestamp, pid, embedding)
+            self.logger.log(timestamp, pid, embedding, bounding_box, file_path, camera_id=None)
         return pid
 
     def _clean_old_entries(self, current_time):
