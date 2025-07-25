@@ -3,14 +3,20 @@ import time
 import os
 from ultralytics import YOLO
 import datetime
-# from pic_tag.camera_worker import frame_queue
-
+import queue
+import threading
 
 # --- 모든 저장 이미지를 위한 전역 순차 번호 카운터 ---
 global_image_sequence_counter = 0
 
+# --- 큐 객체 생성 ---
+# 1. 탐지된 사람 정보(DB 스키마)를 위한 큐
+person_data_queue = queue.Queue(maxsize=10) 
+# 2. 화면 표시(imshow)를 위한 프레임 큐 (가장 최신 프레임만 유지)
+display_frame_queue = queue.Queue(maxsize=2) 
 
-def model_load(model_name="yolov8n.pt"):
+
+def model_load(model_name):
     try:
         model = YOLO(model_name)
         print(f"'{model_name}' model loaded successfully.")
@@ -23,6 +29,7 @@ def model_load(model_name="yolov8n.pt"):
 def make_folder(folder_name):
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
+        print(f"{folder_name} folder created.")
 
 
 def draw_bounding_box(
@@ -39,15 +46,17 @@ def draw_bounding_box(
     return image
 
 
-def capture_frames(cam_num,frame_queue): # rtsp_url 인자를 제거
+def capture_frames(cam_num, person_data_queue_instance, display_frame_queue_instance, web_link=None):
     global global_image_sequence_counter
 
-    main_detected_images_folder = "detected_images"
-    make_folder(main_detected_images_folder)
+    main_data_folder = "data"
+    sub_data_folder = "img"
+    main_data_folder_path = main_data_folder
+    sub_data_folder_path = os.path.join(main_data_folder, sub_data_folder)
+    make_folder(main_data_folder_path)
+    make_folder(sub_data_folder_path)
 
-    # --- 웹캠 사용을 위해 VideoCapture 인자를 0으로 변경 ---
-    cap = cv2.VideoCapture(0) # 0은 보통 시스템의 기본 웹캠을 의미합니다.
-    # 만약 여러 웹캠이 있다면 1, 2 등으로 변경할 수 있습니다.
+    cap = cv2.VideoCapture(cam_num)
 
     if not cap.isOpened():
         print(f"Failed to open webcam (camera index {cam_num}). Please check if the webcam is connected and available.")
@@ -60,26 +69,26 @@ def capture_frames(cam_num,frame_queue): # rtsp_url 인자를 제거
     
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
     print(f"Webcam opened with resolution: {width}x{height} at {fps} FPS.")
 
-    model = model_load("yolov8n.pt")
+    model_name = "yolov8n.pt"
+    model = model_load(model_name)
     if model is None:
-        print("Model loading failed. Exiting capture_frames.")
+        print(f"{model_name} model loading failed. Exiting capture_frames.")
         cap.release()
-        cv2.destroyAllWindows()
         return
 
     frame_count = 0
     person_class_id = None
+    find_class = "person"
+    
     for k, v in model.names.items():
-        if v == 'person':
+        if v == find_class:
             person_class_id = k
             break
-    
     if person_class_id is None:
-        print("Error: 'person' class not found in the loaded model. Person tracking might not work.")
-
+        print(f"Error: '{find_class}' class not found in the loaded model. Person tracking might not work.")
+        return
 
     while True:
         ret, frame = cap.read()
@@ -89,25 +98,18 @@ def capture_frames(cam_num,frame_queue): # rtsp_url 인자를 제거
             print(f"Webcam stream for cam_num {cam_num} ended or error occured.")
             break
 
-        current_time = datetime.datetime.now()
-        # timestamp_str = current_time.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-        
-        timestamp_str  = current_time.strftime('%Y-%m-%d %H:%M:%S') # SQL timestamp format
-        
-        img_name_for_frame = f"frame_{current_time.strftime('%Y%m%d_%H%M%S_%f')[:-3]}.jpg"
+        current_time_dt = datetime.datetime.now()
+        timestamp_str = current_time_dt.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
         # --- 객체 탐지 및 트래킹 ---
-        # classes=person_class_id를 사용하여 'person'만 탐지하도록 필터링
         results = model.track(
             frame, persist=True, tracker="bytetrack.yaml", verbose=False, classes=person_class_id, conf=0.5
         )
 
-        annotated_frame = frame.copy()
-        detected_person_bboxes_for_queue = []
-        
-        # --- 이미지 저장 조건 (이 프레임이 저장 주기에 해당되는가?) ---
+        annotated_frame = frame.copy() # 원본 프레임 복사
+
         is_this_a_saving_frame = False
-        if frame_count % int(fps) == 0: # fps를 정수형으로 변환하여 사용 (예: 1초에 한 번)
+        if int(fps) > 0 and frame_count % int(fps) == 0: 
             is_this_a_saving_frame = True
 
         if results and results[0].boxes.id is not None:
@@ -122,71 +124,147 @@ def capture_frames(cam_num,frame_queue): # rtsp_url 인자를 제거
 
                 if class_name == "person":
                     x1, y1, x2, y2 = map(int, bbox_xyxy)
-                    detected_person_bboxes_for_queue.append([x1, y1, x2, y2])
-
+                    
+                    # 미리보기용 바운딩 박스 그리기
                     annotated_frame = draw_bounding_box(
                         annotated_frame, (x1, y1, x2, y2), class_name, confidence, track_id=track_id
                     )
 
-                    # --- 이미지 저장 (각 탐지된 사람마다 저장) ---
-                    # is_this_a_saving_frame이 True이면, 이 프레임에서 탐지된 모든 사람의 이미지를 저장
+                    # --- 이미지 저장 및 사람 데이터 큐에 전송 ---
                     if is_this_a_saving_frame:
-                        global_image_sequence_counter += 1 # 전역 카운터 증가
+                        global_image_sequence_counter += 1
 
                         crop_x1 = max(0, x1)
                         crop_y1 = max(0, y1)
                         crop_x2 = min(width, x2)
                         crop_y2 = min(height, y2)
                         
+                        image_filepath = None
+                        cropped_image_rgb = None # <--- 추가: 크롭된 RGB 이미지 변수 초기화
+                        
                         if crop_x2 > crop_x1 and crop_y2 > crop_y1:
                             object_crop = frame[crop_y1:crop_y2, crop_x1:crop_x2]
+                            
+                            # <--- 추가: BGR 이미지를 RGB로 변환 ---
+                            cropped_image_rgb = cv2.cvtColor(object_crop, cv2.COLOR_BGR2RGB)
+                            # -----------------------------------
 
-                            # 트랙 ID별 폴더 생성 (이전 로직 복원)
                             tracked_images_folder = os.path.join(
-                                main_detected_images_folder, f"person_track{track_id:04d}"
+                                sub_data_folder_path, f"person_track{track_id:04d}"
                             )
                             make_folder(tracked_images_folder)
 
-                            # 이미지 파일 이름은 전역 순차 번호 사용
                             pic_name = f"hsw-{global_image_sequence_counter:06d}.png"
                             image_filepath = os.path.join(tracked_images_folder, pic_name)
 
                             try:
-                                cv2.imwrite(image_filepath, object_crop)
+                                cv2.imwrite(image_filepath, object_crop) # 파일 저장은 BGR로 해도 무방
+                                print(f"Saved: {image_filepath}")
                             except Exception as e:
                                 print(f"Error saving image {image_filepath}: {e}")
+                                image_filepath = None
+
+                        person_detection_data = {
+                            "timestamp": timestamp_str,
+                            "person_id": track_id,
+                            "embedding": None,
+                            "file_path": image_filepath,
+                            "cropped_image_rgb": cropped_image_rgb, # <--- 추가: RGB 이미지 데이터
+                            "camera_id": cam_num,
+                            "bb_x1": x1,
+                            "bb_y1": y1,
+                            "bb_x2": x2,
+                            "bb_y2": y2
+                        }
                         
 
-        # --- 큐에 데이터 전송 ---
-        if detected_person_bboxes_for_queue:
-            data_transfer = {
-                "img": annotated_frame,
-                "bounding_box": detected_person_bboxes_for_queue,
-                "timeStamp": timestamp_str,
-                "camera_id": cam_num,
-                "img_name": img_name_for_frame,
-            }
-            # Debug line to show the number of detected persons
-            # print(f"[{timestamp_str}] Frame {frame_count} processed, detected {len(detected_person_bboxes_for_queue)} persons.")
-            frame_queue.put(data_transfer)
-            frame_queue.task_done()  # Notify that the task is done
+                        try:
+                            person_data_queue_instance.put(person_detection_data, block=False)
+                        except queue.Full:
+                            print(f"Person data queue full, skipping data for person ID {track_id} at {timestamp_str}")
 
-        # --- 미리보기 및 종료 조건 ---
-        cv2.imshow('Live Preview with YOLO Tracking (Press "q" to stop)', annotated_frame)
-
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            print("'q' 키 입력으로 작업을 중지합니다.")
-            break
         
-        time.sleep(0.01)
+        # --- 어노테이션된 프레임을 디스플레이 큐에 넣기 ---
+        try:
+            while display_frame_queue_instance.qsize() >= display_frame_queue_instance.maxsize:
+                display_frame_queue_instance.get_nowait()
+            display_frame_queue_instance.put_nowait(annotated_frame)
+        except queue.Full:
+            pass
+        except queue.Empty:
+            pass
 
 
-    # --- 루프 종료 후 정리 ---
+    # --- 루프 종료 후 자원 해제 ---
     cap.release()
-    cv2.destroyAllWindows()
+    print(f"Capture for cam_num {cam_num} stopped. Total frames processed: {frame_count}")
     return {"status": "completed", "total_frames": frame_count, "camera_id": cam_num}
 
 
-# --- 함수 호출 예시 (웹캠 사용) ---
+# --- 메인 실행 블록 ---
 if __name__ == "__main__":
-    capture_frames(cam_num=1)
+    
+    # capture_frames 함수를 별도의 스레드에서 실행
+    capture_thread = threading.Thread(
+        target=capture_frames, 
+        args=(0, person_data_queue, display_frame_queue)
+    )
+    capture_thread.daemon = True 
+    capture_thread.start()
+
+    print("Capture thread started. Main thread can now perform other tasks (e.g., consume from queue and display frames).")
+
+    # 메인 스레드에서 큐에서 데이터를 소비하고 화면을 표시하는 루프
+    try:
+        while True:
+            # 1. 사람 데이터 큐에서 정보 소비 (비교/저장 로직)
+            if not person_data_queue.empty():
+                data_from_queue = person_data_queue.get()
+                print(f"Main thread received person data:")
+                for key, value in data_from_queue.items():
+                    if key == "embedding" and value is None:
+                        print(f"  {key}: None (embedding not generated in capture_frames)")
+                    # <--- 추가: 이미지 데이터가 있는 경우 정보 출력 ---
+                    elif key == "cropped_image_rgb":
+                        if value is not None:
+                            print(f"  {key}: <numpy array with shape {value.shape} and dtype {value.dtype}>")
+                        else:
+                            print(f"  {key}: None")
+                    # --------------------------------------------------
+                    else:
+                        print(f"  {key}: {value}")
+            
+            # 2. 디스플레이 프레임 큐에서 프레임 가져와 화면 표시
+            if not display_frame_queue.empty():
+                frame_to_display = display_frame_queue.get()
+                if frame_to_display is not None and frame_to_display.size > 0:
+                    cv2.imshow('Live Preview with YOLO Tracking (Press "q" to stop)', frame_to_display)
+                else:
+                    print("Warning: Received empty or invalid frame for display.")
+            
+            # 3. 키 입력 대기 및 종료 조건 확인 (메인 스레드에서만)
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                print("'q' 키 입력으로 작업을 중지합니다.")
+                break
+            
+            time.sleep(0.01) 
+
+            if not capture_thread.is_alive():
+                print("Capture thread finished. Main thread is also stopping.")
+                break
+
+    except KeyboardInterrupt:
+        print("Main thread received KeyboardInterrupt. Exiting.")
+    finally:
+        cv2.destroyAllWindows() 
+        
+        print("Processing any remaining data in the person data queue...")
+        while not person_data_queue.empty():
+            data_from_queue = person_data_queue.get()
+            print(f"  Remaining person data: {data_from_queue['timestamp']}, Person ID: {data_from_queue['person_id']}")
+        
+        print("Processing any remaining frames in the display queue...")
+        while not display_frame_queue.empty():
+            _ = display_frame_queue.get()
+        
+        print("Program terminated.")
