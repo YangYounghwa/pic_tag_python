@@ -1,10 +1,11 @@
 
 
 
-import queue
 from time import sleep
 import os
 import glob
+import xml.etree.ElementTree as ET
+import time
 import xml.etree.ElementTree as ET
 
 
@@ -17,10 +18,9 @@ from torchvision import transforms
 from ultralytics import YOLO
 
 from .ReID_modelv2 import YOLOv11ReID
-
 import random
 import numpy as np
-
+import time
 import time
 
 
@@ -34,7 +34,7 @@ def extract_features(frame_queue,feature_queue ):
     device = torch.device("cpu")
     
     model3 = YOLOv11ReID()
-    model3.load_state_dict(torch.load(os.path.join(base_dir, "reid_model_state_dictv2.0.pth"), map_location=device))
+    model3.load_state_dict(torch.load(os.path.join(base_dir, "reid_model_state_dict_0724_2.pth"), map_location=device))
 
     model3.eval()
     model3.to(device)
