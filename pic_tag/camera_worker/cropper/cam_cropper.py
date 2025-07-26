@@ -121,9 +121,11 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
 
         annotated_frame = frame.copy() # 원본 프레임 복사
 
-        is_this_a_saving_frame = False
-        if int(fps) > 0 and frame_count % max_fps == 0: 
-            is_this_a_saving_frame = True
+        # Sleep 구문이 있어서 불필요.
+        # is_this_a_saving_frame = False
+        # if int(fps) > 0 and frame_count % max_fps == 0: 
+        
+        is_this_a_saving_frame = True
 
         if results and results[0].boxes.id is not None:
             boxes_data = results[0].boxes.cpu().numpy()
@@ -172,7 +174,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
 
                             try:
                                 cv2.imwrite(image_filepath, object_crop) # 파일 저장은 BGR로 해도 무방
-                                print(f"Saved: {image_filepath}")
+                                # print(f"Saved: {image_filepath}")
                             except Exception as e:
                                 print(f"Error saving image {image_filepath}: {e}")
                                 image_filepath = None
@@ -191,6 +193,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
                         
 
                         try:
+                            print("Adding person detection data to queue.  ")
                             person_data_queue_instance.put(person_detection_data, block=False)
                         except queue.Full:
                             print(f"Person data queue full, skipping data for person ID {track_id} at {timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}")
