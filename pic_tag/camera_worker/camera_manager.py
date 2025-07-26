@@ -23,7 +23,7 @@ def start_all_cameras(folder: Path = None):
     log_db_path = folder / "db" / "identity_log.db"
     log_db_path.parent.mkdir(parents=True, exist_ok=True) 
    
-   
+    
     
     logger = IdentityLogger(log_db_path)
     frame_queue = Queue.Queue(maxsize=250)

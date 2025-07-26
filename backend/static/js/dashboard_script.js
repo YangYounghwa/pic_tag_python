@@ -1,0 +1,1022 @@
+// 전역 변수에 현재 위치 정보 저장
+let currentLocation = '';
+let locationName = '';
+let userLocations = {}; // 사용자별 위치 정보 저장
+
+// 사용자 위치 정보 관리 함수
+function getUserLocationById(userId) {
+    return userLocations[userId]?.location || 'unknown';
+}
+
+function getLocationNameById(userId) {
+    return userLocations[userId]?.locationName || '알 수 없음';
+}
+
+function setUserLocation(userId, location, locationName) {
+    userLocations[userId] = { location, locationName };
+}
+
+// 로그인 처리
+document.getElementById('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const location = document.getElementById('location').value;
+
+    // 통합 관리 계정 (모든 CCTV 볼 수 있음)
+    if (username === 'admin' && password === 'admin123') {
+        currentLocation = 'admin';
+        locationName = '통합 관리자';
+        showDashboard();
+        return;
+    }
+
+    // 위치별 로그인 계정
+    const validLogins = {
+        'entrance': { username: 'entrance', password: 'entrance123', name: '현관 입구' },
+        'parking': { username: 'parking', password: 'parking123', name: '주차장' },
+        'hallway': { username: 'hallway', password: 'hallway123', name: '복도' },
+        'emergency': { username: 'emergency', password: 'emergency123', name: '비상구' }
+    };
+
+    if (location && validLogins[location] &&
+        username === validLogins[location].username &&
+        password === validLogins[location].password) {
+
+        currentLocation = location;
+        locationName = validLogins[location].name;
+        showDashboard();
+    } else {
+        alert('잘못된 로그인 정보이거나 위치가 선택되지 않았습니다.');
+    }
+});
+
+// 로그아웃
+function logout() {
+    document.getElementById('loginPage').style.display = 'flex';
+    document.getElementById('dashboardPage').style.display = 'none';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('location').value = '';
+
+    // 웹캠 중지
+    stopWebcam();
+
+    // WebSocket 연결 종료
+    if (socket) {
+        socket.close();
+    }
+}
+
+// 섹션 표시
+function showSection(sectionName) {
+    const sections = document.querySelectorAll('.section');
+    sections.forEach(section => section.classList.add('hidden'));
+
+    document.getElementById(sectionName).classList.remove('hidden');
+
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach(item => item.classList.remove('active'));
+    event.target.classList.add('active');
+
+    // 통계 페이지 초기화
+    if (sectionName === 'statistics') {
+        setTimeout(() => {
+            initializeCharts();
+            updateLogTable();
+            updateTrackingGrid();
+            refreshLogs();
+        }, 100);
+    }
+}
+
+// 카메라 선택
+function selectCamera(element, location, camId) {
+    const thumbs = document.querySelectorAll('.camera-thumb');
+    thumbs.forEach(thumb => thumb.classList.remove('active'));
+    element.classList.add('active');
+
+    const videoInfo = document.querySelector('.video-info');
+    videoInfo.textContent = `${location} - ${camId}`;
+
+    const mainVideo = document.getElementById('mainWebcam');
+
+    if (webcamStream && mainVideo) {
+        // 메인 비디오에 웹캠 스트림 적용
+        mainVideo.srcObject = webcamStream;
+
+        // 각 카메라 타입에 따라 다른 스타일 적용
+        switch (camId) {
+            case 'CAM01': // 실시간 웹캠
+                mainVideo.style.transform = '';
+                mainVideo.style.filter = '';
+                break;
+            case 'CAM02': // 웹캠 미러모드
+                mainVideo.style.transform = 'scaleX(-1)';
+                mainVideo.style.filter = '';
+                break;
+            case 'CAM03': // 시뮬레이션 카메라 (오프라인)
+                mainVideo.srcObject = null;
+                mainVideo.style.transform = '';
+                mainVideo.style.filter = '';
+                break;
+            case 'CAM04': // 웹캠 (흑백)
+                mainVideo.style.transform = '';
+                mainVideo.style.filter = 'grayscale(100%)';
+                break;
+            default: // 원격 사용자 스트림
+                if (camId.startsWith('REMOTE_')) {
+                    const userId = camId.replace('REMOTE_', '');
+                    if (remoteStreams[userId]) {
+                        mainVideo.srcObject = remoteStreams[userId];
+                        mainVideo.style.transform = '';
+                        mainVideo.style.filter = '';
+                    }
+                }
+                break;
+        }
+
+        console.log(`메인 비디오가 ${location}로 전환되었습니다.`);
+    }
+}
+
+// 영상 재생/일시정지
+function playPause() {
+    const btn = event.target;
+    if (btn.textContent === '▶') {
+        btn.textContent = '⏸';
+    } else {
+        btn.textContent = '▶';
+    }
+}
+
+// 타임라인 시크
+function seekVideo(event) {
+    const timeline = event.currentTarget;
+    const rect = timeline.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const percentage = (clickX / rect.width) * 100;
+
+    const progress = timeline.querySelector('.timeline-progress');
+    const marker = timeline.querySelector('.timeline-marker');
+
+    progress.style.width = percentage + '%';
+    marker.style.left = percentage + '%';
+}
+
+// 크롭 이미지 선택
+function selectCrop(element, timestamp) {
+    // 기존 선택 해제
+    const crops = document.querySelectorAll('.crop-item');
+    crops.forEach(crop => crop.classList.remove('selected'));
+
+    // 현재 항목 선택
+    element.classList.add('selected');
+
+    // 타임라인에 마커 표시
+    const marker = document.querySelector('.timeline-marker');
+    if (marker) {
+        // 시간에 따른 위치 계산 (예시)
+        const timeValue = parseInt(timestamp.split(':')[2]);
+        const position = (timeValue / 60) * 100; // 분 단위로 계산
+        marker.style.left = Math.min(position, 90) + '%';
+    }
+
+    // 로그에 해당 시간 강조
+    highlightLogEntry(timestamp);
+}
+
+// 로그 엔트리 강조
+function highlightLogEntry(timestamp) {
+    const logEntries = document.querySelectorAll('.log-entry');
+    logEntries.forEach(entry => {
+        const timeElement = entry.querySelector('.log-time');
+        if (timeElement && timeElement.textContent === timestamp) {
+            entry.style.background = '#f0f0ff';
+            entry.style.borderLeft = '3px solid #1a237e';
+        } else {
+            entry.style.background = '';
+            entry.style.borderLeft = '';
+        }
+    });
+}
+
+// iOS 스타일 토글
+function toggleSetting(element) {
+    element.classList.toggle('active');
+}
+
+// 테마 전환 함수
+function switchTheme(theme) {
+    window.location.href = `/?theme=${theme}`;
+}
+
+// 웹캠 관련 변수
+let webcamStream = null;
+let isWebcamActive = false;
+
+// WebRTC 관련 변수
+let socket = null;
+let peerConnections = {};
+let remoteStreams = {};
+let myUserId = null;
+
+// STUN 서버 설정
+const iceServers = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+    ]
+};
+
+// 웹캠 초기화 함수
+async function initWebcam() {
+    try {
+        // 브라우저 보안 확인
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('브라우저에서 웹캠을 지원하지 않습니다.');
+        }
+
+        // HTTPS 연결 확인 (localhost 제외)
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            console.warn('HTTP 연결에서 웹캠 접근이 제한될 수 있습니다.');
+            // Chrome의 경우 insecure origins에서 webcam 접근을 차단
+            if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
+                showWebcamError('Chrome에서는 HTTPS 연결이 필요합니다.<br>또는 브라우저 설정에서 이 사이트를 안전한 사이트로 추가하세요.<br><br><strong>해결방법:</strong><br>1. Chrome 주소창에 chrome://flags/#unsafely-treat-insecure-origin-as-secure 입력<br>2. 이 사이트 주소를 추가하고 재시작');
+                return;
+            }
+        }
+
+        const constraints = {
+            video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                facingMode: 'user'
+            },
+            audio: false
+        };
+
+        console.log('웹캠 권한 요청 중...');
+        webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        isWebcamActive = true;
+        console.log(`웹캠이 성공적으로 초기화되었습니다. 위치: ${locationName}`);
+
+        // 성공 메시지 표시
+        showWebcamSuccess();
+
+    } catch (error) {
+        console.error('웹캠 접근 오류:', error);
+        handleWebcamError(error);
+    }
+}
+
+// 웹캠 에러 처리
+function handleWebcamError(error) {
+    let errorMessage = '웹캠에 접근할 수 없습니다.';
+
+    if (error.name === 'NotAllowedError') {
+        errorMessage = '웹캠 접근이 거부되었습니다.<br><br><strong>해결방법:</strong><br>1. 브라우저 주소창의 카메라 아이콘 클릭<br>2. "허용"으로 변경<br>3. 페이지 새로고침';
+    } else if (error.name === 'NotFoundError') {
+        errorMessage = '카메라를 찾을 수 없습니다.<br>카메라가 연결되어 있는지 확인해주세요.';
+    } else if (error.name === 'NotSupportedError') {
+        errorMessage = 'HTTPS 연결이 필요합니다.<br>또는 브라우저에서 웹캠을 지원하지 않습니다.';
+    } else {
+        errorMessage = `웹캠 오류: ${error.message}<br><br>다른 프로그램에서 카메라를 사용 중일 수 있습니다.`;
+    }
+
+    showWebcamError(errorMessage);
+}
+
+// 웹캠 에러 메시지 표시
+function showWebcamError(message) {
+    const placeholder = document.getElementById('mainVideoPlaceholder');
+    if (placeholder) {
+        placeholder.innerHTML = `<div style="color: #ff6b6b; padding: 20px; font-size: 14px; line-height: 1.5;">${message}</div>`;
+    }
+}
+
+// 웹캠 성공 메시지 표시
+function showWebcamSuccess() {
+    const placeholder = document.getElementById('mainVideoPlaceholder');
+    if (placeholder) {
+        placeholder.innerHTML = `<div style="color: #51cf66; padding: 20px; font-size: 16px;">${locationName} 웹캠이 활성화되었습니다.<br>다른 사용자들이 이 카메라를 볼 수 있습니다.</div>`;
+    }
+}
+
+// 웹캠 중지 함수
+function stopWebcam() {
+    if (webcamStream) {
+        webcamStream.getTracks().forEach(track => track.stop());
+        webcamStream = null;
+        isWebcamActive = false;
+        console.log('웹캠이 중지되었습니다.');
+    }
+}
+
+// 웹캠 켜기/끄기 토글 함수
+function toggleWebcam() {
+    if (isWebcamActive) {
+        stopWebcam();
+        // 비디오 요소들 숨기기
+        const videos = ['mainWebcam', 'thumbWebcam1', 'thumbWebcam2', 'thumbWebcam3'];
+        videos.forEach(id => {
+            const video = document.getElementById(id);
+            if (video) {
+                video.style.display = 'none';
+            }
+        });
+    } else {
+        initWebcam();
+    }
+}
+
+// 실시간 시간 업데이트
+function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('ko-KR', { hour12: false });
+    const timeDisplay = document.getElementById('timeDisplay');
+    if (timeDisplay) {
+        timeDisplay.textContent = timeString;
+    }
+}
+
+// 통계 데이터 업데이트
+function updateStats() {
+    const statValues = document.querySelectorAll('.stat-value');
+    if (statValues.length >= 4) {
+        // 실시간으로 변하는 데이터 시뮬레이션
+        const currentEntry = parseInt(statValues[0].textContent) || 142;
+        const currentExit = parseInt(statValues[1].textContent) || 98;
+
+        // 간헐적으로 입장자 증가
+        if (Math.random() < 0.1) {
+            statValues[0].textContent = currentEntry + 1;
+            statValues[2].textContent = (currentEntry + 1) - currentExit; // 현재 체류 인원
+        }
+
+        // 간헐적으로 퇴장자 증가
+        if (Math.random() < 0.08) {
+            statValues[1].textContent = currentExit + 1;
+            statValues[2].textContent = currentEntry - (currentExit + 1); // 현재 체류 인원
+        }
+
+        // 평균 체류시간 변동
+        const avgTimes = ['23분', '25분', '27분', '24분', '26분'];
+        statValues[3].textContent = avgTimes[Math.floor(Math.random() * avgTimes.length)];
+    }
+}
+
+// 새로운 로그 엔트리 추가
+function addNewLogEntry() {
+    const logTable = document.querySelector('.log-table tbody');
+    if (logTable && Math.random() < 0.05) { // 5% 확률로 새 로그 추가
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('ko-KR', { hour12: false });
+        const types = ['입장', '퇴장'];
+        const locations = ['현관 입구', '비상구', '주차장 입구'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        const location = locations[Math.floor(Math.random() * locations.length)];
+
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+                    <td>${timeString}</td>
+                    <td>${type}</td>
+                    <td>${location}</td>
+                    <td>${type === '입장' ? '-' : Math.floor(Math.random() * 120) + '분'}</td>
+                    <td>${type === '입장' ? '진행중' : '완료'}</td>
+                `;
+
+        logTable.insertBefore(newRow, logTable.firstChild);
+
+        // 최대 10개 로그만 유지
+        const rows = logTable.querySelectorAll('tr');
+        if (rows.length > 10) {
+            logTable.removeChild(rows[rows.length - 1]);
+        }
+    }
+}
+
+// 감지 로그 업데이트
+function updateDetectionLog() {
+    const detectionLog = document.querySelector('.detection-log');
+    if (detectionLog && Math.random() < 0.1) { // 10% 확률로 새 감지 로그 추가
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('ko-KR', { hour12: false });
+        const actions = [
+            '인원 감지 - 현관 입구 진입',
+            '인원 감지 - 주차장 이동',
+            '인원 감지 - 복도 통과',
+            '인원 감지 - 비상구 접근',
+            '인원 감지 - 대기 중'
+        ];
+        const action = actions[Math.floor(Math.random() * actions.length)];
+
+        const newEntry = document.createElement('div');
+        newEntry.className = 'log-entry';
+        newEntry.innerHTML = `
+                    <div class="log-time">${timeString}</div>
+                    <div class="log-action">${action}</div>
+                `;
+
+        const logContainer = detectionLog.querySelector('h3').nextSibling;
+        detectionLog.insertBefore(newEntry, logContainer.nextSibling);
+
+        // 최대 15개 로그만 유지
+        const entries = detectionLog.querySelectorAll('.log-entry');
+        if (entries.length > 15) {
+            detectionLog.removeChild(entries[entries.length - 1]);
+        }
+    }
+}
+
+// 자동 재생 시뮬레이션
+function simulatePlayback() {
+    const progress = document.querySelector('.timeline-progress');
+    const marker = document.querySelector('.timeline-marker');
+
+    if (progress && marker) {
+        let currentWidth = parseInt(progress.style.width) || 30;
+        if (currentWidth < 90) {
+            currentWidth += 0.5;
+            progress.style.width = currentWidth + '%';
+            marker.style.left = currentWidth + '%';
+        } else {
+            progress.style.width = '0%';
+            marker.style.left = '0%';
+        }
+    }
+}
+
+// 모든 업데이트 함수들을 정기적으로 실행
+setInterval(updateTime, 1000);          // 1초마다 시간 업데이트
+setInterval(updateStats, 10000);        // 10초마다 통계 업데이트
+setInterval(addNewLogEntry, 15000);     // 15초마다 새 로그 확인
+setInterval(updateDetectionLog, 8000);  // 8초마다 감지 로그 업데이트
+setInterval(simulatePlayback, 2000);    // 2초마다 재생 시뮬레이션
+
+// 초기 설정
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('loginPage').style.display = 'flex';
+    document.getElementById('dashboardPage').style.display = 'none';
+    updateTime();
+});
+
+// WebSocket 연결 초기화
+function initWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/video_call/`;
+
+    socket = new WebSocket(wsUrl);
+
+    socket.onopen = function (event) {
+        console.log('WebSocket 연결됨');
+        // 위치 정보 전송
+        socket.send(JSON.stringify({
+            type: 'location_info',
+            location: currentLocation,
+            location_name: locationName
+        }));
+    };
+
+    socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        handleWebSocketMessage(data);
+    };
+
+    socket.onclose = function (event) {
+        console.log('WebSocket 연결 종료');
+        setTimeout(() => {
+            if (document.getElementById('dashboardPage').style.display !== 'none') {
+                initWebSocket(); // 대시보드가 표시 중일 때만 재연결
+            }
+        }, 3000);
+    };
+
+    socket.onerror = function (error) {
+        console.error('WebSocket 오류:', error);
+    };
+}
+
+// WebSocket 메시지 처리
+async function handleWebSocketMessage(data) {
+    console.log('WebSocket 메시지 받음:', data);
+
+    switch (data.type) {
+        case 'user_joined':
+            console.log('새 사용자 입장:', data.user_id, '위치:', data.location_name);
+            if (data.location && data.location !== currentLocation) {
+                setUserLocation(data.user_id, data.location, data.location_name);
+                await createPeerConnection(data.user_id, data.location, data.location_name);
+            }
+            break;
+
+        case 'location_updated':
+            console.log('사용자 위치 업데이트:', data.user_id, '위치:', data.location_name);
+            if (data.location && data.location !== currentLocation) {
+                setUserLocation(data.user_id, data.location, data.location_name);
+                await createPeerConnection(data.user_id, data.location, data.location_name);
+            }
+            break;
+
+        case 'user_left':
+            console.log('사용자 퇴장:', data.user_id);
+            closePeerConnection(data.user_id);
+            break;
+
+        case 'offer':
+            await handleOffer(data);
+            break;
+
+        case 'answer':
+            await handleAnswer(data);
+            break;
+
+        case 'ice_candidate':
+            await handleIceCandidate(data);
+            break;
+    }
+}
+
+// Peer Connection 생성
+async function createPeerConnection(userId, userLocation, locationName) {
+    try {
+        console.log(`Peer Connection 생성: ${userId} (${locationName})`);
+        const peerConnection = new RTCPeerConnection(iceServers);
+        peerConnections[userId] = peerConnection;
+
+        // 사용자 위치 정보 저장
+        peerConnections[userId].userLocation = userLocation;
+        peerConnections[userId].locationName = locationName;
+
+        // ICE Candidate 이벤트
+        peerConnection.onicecandidate = function (event) {
+            if (event.candidate) {
+                socket.send(JSON.stringify({
+                    type: 'ice_candidate',
+                    candidate: event.candidate,
+                    to_user: userId
+                }));
+            }
+        };
+
+        // Remote Stream 이벤트
+        peerConnection.ontrack = function (event) {
+            console.log('Remote stream 받음:', userId, locationName);
+            remoteStreams[userId] = event.streams[0];
+            displayRemoteStream(userId, event.streams[0], userLocation, locationName);
+        };
+
+        // 내 스트림 추가 (위치 기반 사용자만)
+        if (webcamStream && currentLocation !== 'admin') {
+            webcamStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, webcamStream);
+            });
+            console.log('내 웹캠 스트림 추가됨');
+        }
+
+        // Offer 생성 및 전송
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        socket.send(JSON.stringify({
+            type: 'offer',
+            offer: offer,
+            to_user: userId
+        }));
+
+    } catch (error) {
+        console.error('Peer Connection 생성 오류:', error);
+    }
+}
+
+// Offer 처리
+async function handleOffer(data) {
+    try {
+        console.log('Offer 받음:', data.from_user);
+        const peerConnection = new RTCPeerConnection(iceServers);
+        peerConnections[data.from_user] = peerConnection;
+
+        // ICE Candidate 이벤트
+        peerConnection.onicecandidate = function (event) {
+            if (event.candidate) {
+                socket.send(JSON.stringify({
+                    type: 'ice_candidate',
+                    candidate: event.candidate,
+                    to_user: data.from_user
+                }));
+            }
+        };
+
+        // Remote Stream 이벤트
+        peerConnection.ontrack = function (event) {
+            console.log('Remote stream 받음 (Offer 응답):', data.from_user);
+            remoteStreams[data.from_user] = event.streams[0];
+            // 위치 정보는 별도로 관리되어야 함
+            const userLocation = getUserLocationById(data.from_user);
+            const locationName = getLocationNameById(data.from_user);
+            displayRemoteStream(data.from_user, event.streams[0], userLocation, locationName);
+        };
+
+        // 내 스트림 추가 (위치 기반 사용자만)
+        if (webcamStream && currentLocation !== 'admin') {
+            webcamStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, webcamStream);
+            });
+            console.log('내 웹캠 스트림 추가됨 (Answer)');
+        }
+
+        // Offer 설정 및 Answer 생성
+        await peerConnection.setRemoteDescription(data.offer);
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        socket.send(JSON.stringify({
+            type: 'answer',
+            answer: answer,
+            to_user: data.from_user
+        }));
+
+    } catch (error) {
+        console.error('Offer 처리 오류:', error);
+    }
+}
+
+// Answer 처리
+async function handleAnswer(data) {
+    try {
+        const peerConnection = peerConnections[data.from_user];
+        if (peerConnection) {
+            await peerConnection.setRemoteDescription(data.answer);
+        }
+    } catch (error) {
+        console.error('Answer 처리 오류:', error);
+    }
+}
+
+// ICE Candidate 처리
+async function handleIceCandidate(data) {
+    try {
+        const peerConnection = peerConnections[data.from_user];
+        if (peerConnection) {
+            await peerConnection.addIceCandidate(data.candidate);
+        }
+    } catch (error) {
+        console.error('ICE Candidate 처리 오류:', error);
+    }
+}
+
+// Remote Stream 표시
+function displayRemoteStream(userId, stream, userLocation, locationName) {
+    console.log(`원격 스트림 표시: ${userId}, 위치: ${locationName}`);
+
+    // 해당 위치의 썸네일 찾기
+    const thumbElement = document.getElementById(`thumb-${userLocation}`);
+    if (thumbElement) {
+        // 기존 내용 제거하고 비디오 요소 생성
+        thumbElement.innerHTML = '';
+        const video = document.createElement('video');
+        video.autoplay = true;
+        video.muted = true;
+        video.srcObject = stream;
+        video.style.width = '100%';
+        video.style.height = '100%';
+        video.style.objectFit = 'cover';
+
+        thumbElement.appendChild(video);
+
+        // 썸네일 활성화 표시
+        const thumbContainer = thumbElement.parentElement;
+        thumbContainer.classList.add('active');
+
+        console.log(`${locationName} 카메라 스트림 연결됨`);
+    }
+}
+
+// Peer Connection 종료
+function closePeerConnection(userId) {
+    if (peerConnections[userId]) {
+        peerConnections[userId].close();
+        delete peerConnections[userId];
+    }
+    if (remoteStreams[userId]) {
+        delete remoteStreams[userId];
+    }
+
+    // 해당 사용자의 썸네일 정리
+    const thumbnails = document.querySelectorAll('.camera-thumb');
+    thumbnails.forEach(thumb => {
+        const infoDiv = thumb.querySelector('.thumb-info');
+        if (infoDiv && infoDiv.textContent === `사용자 ${userId}`) {
+            const video = thumb.querySelector('video');
+            if (video) {
+                video.srcObject = null;
+            }
+            infoDiv.textContent = '연결 대기중';
+            thumb.setAttribute('onclick', `selectCamera(this, '연결 대기중', 'EMPTY')`);
+        }
+    });
+}
+
+// 대시보드 표시 시 웹캠 시작
+function showDashboard() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('dashboardPage').style.display = 'block';
+
+    // 사용자 정보 업데이트
+    const userInfo = document.querySelector('.user-info span');
+    if (userInfo) {
+        userInfo.textContent = locationName || '관리자';
+    }
+
+    // 웹캠 및 WebSocket 초기화
+    setTimeout(async () => {
+        // 위치 기반 사용자(관리자 제외)는 웹캠 시작
+        if (currentLocation !== 'admin') {
+            await initWebcam();
+        }
+        initWebSocket();
+    }, 1000);
+}
+
+// === 통계 데이터 및 차트 ===
+
+// identity_log 테이블 구조를 기반으로 한 하드코딩 데이터
+const identityLogs = [
+    { id: 1, timestamp: '2025-01-25 14:32:15', person_id: 1001, embedding: '[0.1,0.2,...]', file_path: '/captures/img_001.jpg', camera_id: 1, bb_x1: 120, bb_y1: 80, bb_x2: 220, bb_y2: 280 },
+    { id: 2, timestamp: '2025-01-25 14:31:45', person_id: 1002, embedding: '[0.3,0.4,...]', file_path: '/captures/img_002.jpg', camera_id: 2, bb_x1: 150, bb_y1: 90, bb_x2: 250, bb_y2: 290 },
+    { id: 3, timestamp: '2025-01-25 14:30:20', person_id: 1001, embedding: '[0.1,0.2,...]', file_path: '/captures/img_003.jpg', camera_id: 3, bb_x1: 110, bb_y1: 75, bb_x2: 210, bb_y2: 275 },
+    { id: 4, timestamp: '2025-01-25 14:29:55', person_id: 1003, embedding: '[0.5,0.6,...]', file_path: '/captures/img_004.jpg', camera_id: 1, bb_x1: 130, bb_y1: 85, bb_x2: 230, bb_y2: 285 },
+    { id: 5, timestamp: '2025-01-25 14:28:30', person_id: 1004, embedding: '[0.7,0.8,...]', file_path: '/captures/img_005.jpg', camera_id: 4, bb_x1: 140, bb_y1: 95, bb_x2: 240, bb_y2: 295 },
+    { id: 6, timestamp: '2025-01-25 14:27:10', person_id: 1002, embedding: '[0.3,0.4,...]', file_path: '/captures/img_006.jpg', camera_id: 2, bb_x1: 155, bb_y1: 92, bb_x2: 255, bb_y2: 292 },
+    { id: 7, timestamp: '2025-01-25 14:25:45', person_id: 1005, embedding: '[0.9,1.0,...]', file_path: '/captures/img_007.jpg', camera_id: 1, bb_x1: 125, bb_y1: 82, bb_x2: 225, bb_y2: 282 },
+    { id: 8, timestamp: '2025-01-25 14:24:20', person_id: 1001, embedding: '[0.1,0.2,...]', file_path: '/captures/img_008.jpg', camera_id: 3, bb_x1: 115, bb_y1: 78, bb_x2: 215, bb_y2: 278 },
+    { id: 9, timestamp: '2025-01-25 14:22:55', person_id: 1006, embedding: '[1.1,1.2,...]', file_path: '/captures/img_009.jpg', camera_id: 2, bb_x1: 160, bb_y1: 88, bb_x2: 260, bb_y2: 288 },
+    { id: 10, timestamp: '2025-01-25 14:21:30', person_id: 1003, embedding: '[0.5,0.6,...]', file_path: '/captures/img_010.jpg', camera_id: 4, bb_x1: 135, bb_y1: 87, bb_x2: 235, bb_y2: 287 }
+];
+
+const cameraNames = {
+    1: '현관 입구',
+    2: '주차장',
+    3: '복도',
+    4: '비상구'
+};
+
+let charts = {};
+
+// 차트 초기화
+function initializeCharts() {
+    // 기존 차트가 있으면 제거
+    Object.keys(charts).forEach(key => {
+        if (charts[key]) {
+            charts[key].destroy();
+        }
+    });
+    charts = {};
+
+    // 시간대별 감지 현황 차트
+    const hourlyCtx = document.getElementById('hourlyChart');
+    if (hourlyCtx) {
+        charts.hourly = new Chart(hourlyCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                datasets: [{
+                    label: '감지 수',
+                    data: [2, 1, 15, 32, 28, 12],
+                    borderColor: '#1a237e',
+                    backgroundColor: 'rgba(26, 35, 126, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // 카메라별 감지 분포 차트
+    const cameraCtx = document.getElementById('cameraChart');
+    if (cameraCtx) {
+        const cameraData = getCameraDistribution();
+        charts.camera = new Chart(cameraCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.values(cameraNames),
+                datasets: [{
+                    data: cameraData,
+                    backgroundColor: ['#1a237e', '#3f51b5', '#7986cb', '#c5cae9']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    // 주간 감지 추이 차트
+    const weeklyCtx = document.getElementById('weeklyChart');
+    if (weeklyCtx) {
+        charts.weekly = new Chart(weeklyCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['월', '화', '수', '목', '금', '토', '일'],
+                datasets: [{
+                    label: '일별 감지 수',
+                    data: [45, 52, 38, 67, 73, 28, 15],
+                    backgroundColor: '#1a237e'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // 신뢰도 분포 차트
+    const confidenceCtx = document.getElementById('confidenceChart');
+    if (confidenceCtx) {
+        charts.confidence = new Chart(confidenceCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['90-95%', '95-98%', '98-99%', '99-100%'],
+                datasets: [{
+                    label: '감지 건수',
+                    data: [12, 35, 67, 28],
+                    backgroundColor: ['#ff6b6b', '#feca57', '#48dbfb', '#0abde3']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+}
+
+// 카메라별 감지 분포 계산
+function getCameraDistribution() {
+    const distribution = [0, 0, 0, 0];
+    identityLogs.forEach(log => {
+        if (log.camera_id >= 1 && log.camera_id <= 4) {
+            distribution[log.camera_id - 1]++;
+        }
+    });
+    return distribution;
+}
+
+// 로그 테이블 업데이트
+function updateLogTable(filterCamera = 'all') {
+    const tbody = document.getElementById('logTableBody');
+    tbody.innerHTML = '';
+
+    let filteredLogs = identityLogs;
+    if (filterCamera !== 'all') {
+        const cameraId = getCameraIdByLocation(filterCamera);
+        filteredLogs = identityLogs.filter(log => log.camera_id === cameraId);
+    }
+
+    filteredLogs.slice(0, 20).forEach(log => {
+        const row = document.createElement('tr');
+        const confidence = (Math.random() * 10 + 90).toFixed(1); // 90-100% 랜덤 신뢰도
+        const status = Math.random() > 0.8 ? 'error' : 'success';
+
+        row.innerHTML = `
+                    <td>${formatTimestamp(log.timestamp)}</td>
+                    <td>Person-${log.person_id}</td>
+                    <td>CAM-${log.camera_id}</td>
+                    <td>${cameraNames[log.camera_id]}</td>
+                    <td>${confidence}%</td>
+                    <td><span class="status ${status}">${status === 'success' ? '정상' : '오류'}</span></td>
+                `;
+        tbody.appendChild(row);
+    });
+}
+
+// 인원 추적 현황 업데이트
+function updateTrackingGrid() {
+    const grid = document.getElementById('trackingGrid');
+    grid.innerHTML = '';
+
+    const uniquePersons = [...new Set(identityLogs.map(log => log.person_id))];
+
+    uniquePersons.forEach(personId => {
+        const personLogs = identityLogs.filter(log => log.person_id === personId);
+        const latestLog = personLogs[0];
+        const isActive = Math.random() > 0.5;
+
+        const card = document.createElement('div');
+        card.className = 'person-card';
+        card.innerHTML = `
+                    <div class="person-id">Person-${personId}</div>
+                    <div class="person-info">마지막 감지: ${formatTimestamp(latestLog.timestamp)}</div>
+                    <div class="person-info">위치: ${cameraNames[latestLog.camera_id]}</div>
+                    <div class="person-info">감지 횟수: ${personLogs.length}회</div>
+                    <div class="person-status ${isActive ? 'active' : 'inactive'}">
+                        ${isActive ? '활성' : '비활성'}
+                    </div>
+                `;
+        grid.appendChild(card);
+    });
+}
+
+// 유틸리티 함수들
+function formatTimestamp(timestamp) {
+    return new Date(timestamp).toLocaleTimeString('ko-KR');
+}
+
+function getCameraIdByLocation(location) {
+    const locationMap = {
+        'entrance': 1,
+        'parking': 2,
+        'hallway': 3,
+        'emergency': 4
+    };
+    return locationMap[location] || 1;
+}
+
+// 로그 새로고침
+function refreshLogs() {
+    const filter = document.getElementById('logFilter').value;
+    updateLogTable(filter);
+    updateTrackingGrid();
+
+    // 통계 카드 업데이트
+    document.getElementById('todayDetections').textContent = identityLogs.length;
+    document.getElementById('uniquePersons').textContent = [...new Set(identityLogs.map(log => log.person_id))].length;
+    document.getElementById('activeCameras').textContent = [...new Set(identityLogs.map(log => log.camera_id))].length;
+    document.getElementById('avgConfidence').textContent = '94.2%';
+}
+
+// 로그 필터 이벤트
+document.addEventListener('DOMContentLoaded', function () {
+    const logFilter = document.getElementById('logFilter');
+    if (logFilter) {
+        logFilter.addEventListener('change', function () {
+            updateLogTable(this.value);
+        });
+    }
+});
+
+// 키보드 단축키
+document.addEventListener('keydown', function (e) {
+    // 스페이스바로 재생/일시정지
+    if (e.code === 'Space' && document.getElementById('monitoring').style.display !== 'none') {
+        e.preventDefault();
+        const playBtn = document.querySelector('.video-controls button');
+        if (playBtn) playBtn.click();
+    }
+
+    // 숫자 키로 카메라 선택
+    if (e.code >= 'Digit1' && e.code <= 'Digit4') {
+        const cameraIndex = parseInt(e.code.charAt(5)) - 1;
+        const cameras = document.querySelectorAll('.camera-thumb');
+        if (cameras[cameraIndex]) {
+            cameras[cameraIndex].click();
+        }
+    }
+});
+
+// 터치 지원 (모바일)
+let touchStartX = 0;
+document.addEventListener('touchstart', function (e) {
+    touchStartX = e.touches[0].clientX;
+});
+
+document.addEventListener('touchend', function (e) {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+
+    // 스와이프로 카메라 전환
+    if (Math.abs(diff) > 50) {
+        const activeCamera = document.querySelector('.camera-thumb.active');
+        const cameras = Array.from(document.querySelectorAll('.camera-thumb'));
+        const currentIndex = cameras.indexOf(activeCamera);
+
+        if (diff > 0 && currentIndex < cameras.length - 1) {
+            cameras[currentIndex + 1].click();
+        } else if (diff < 0 && currentIndex > 0) {
+            cameras[currentIndex - 1].click();
+        }
+    }
+});
