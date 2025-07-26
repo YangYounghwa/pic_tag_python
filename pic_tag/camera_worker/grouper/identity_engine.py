@@ -24,10 +24,10 @@ class IdentityEngine(threading.Thread):
     def run(self):
         while self.running:
             try:
-                feature_data = self.queue.get(timeout=0.1)
+                feature_data = self.queue.get()
                 if not feature_data:
                     print("No more feature data to process, sleeping for a while...")
-                    time.sleep(0.25)
+                    time.sleep(0.1)
                     continue
 
                 # Extract data
@@ -62,6 +62,7 @@ class IdentityEngine(threading.Thread):
                 self.queue.task_done()
 
             except Empty:
+                print("No more feature data to process, sleeping for a while...")
                 time.sleep(0.1)
                 continue
 

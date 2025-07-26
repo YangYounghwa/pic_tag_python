@@ -56,12 +56,12 @@ def extract_features(frame_queue,feature_queue ):
             frame_queue.task_done()
         except queue.Empty as e:
             print("Frame queue is empty, sleeping for a while...")
-            sleep(0.25)
+            sleep(0.1)
             continue
 
         if frame_data is None:
             print("No more frames to process, sleeping for a while...")
-            sleep(0.25)
+            sleep(0.1)
             continue  # Skip if no frame data is available
         # Debug line to show which frame is being processed
 
