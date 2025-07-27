@@ -47,7 +47,7 @@ def draw_bounding_box(
     )
     return image
 
-def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path = None, web_link=None, max_fps=15):
+def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path = None, web_link=None, max_fps=12):
     global global_image_sequence_counter
 
     if destination_folder is None:
@@ -120,6 +120,10 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
         )
 
         annotated_frame = frame.copy() # 원본 프레임 복사
+
+        cv2.imshow(f"Camera {cam_num}", annotated_frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
         # Sleep 구문이 있어서 불필요.
         # is_this_a_saving_frame = False
