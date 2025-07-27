@@ -6,6 +6,9 @@ import numpy as np
 from .services.rtsp_pool import CameraPool
 import configparser
 import os
+from turbojpeg import TurboJPEG
+jpeg = TurboJPEG()
+
 
 class CameraStreamConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -35,13 +38,19 @@ class CameraStreamConsumer(AsyncWebsocketConsumer):
         while self.running:
             frame = self.camera.get_frame()
             if frame is not None:
+                resized = cv2.resize(frame, (320, 180))
                 # Encode frame as JPEG and base64
-                _, jpeg = cv2.imencode('.jpg', frame)
-                b64 = base64.b64encode(jpeg.tobytes()).decode('utf-8')
-                await self.send(text_data=b64)
 
-            await asyncio.sleep(0.3)  # ~3 FPS for thumbnail (adjust per use)
-    
+                # Encode using TurboJPEG (faster and lower CPU)
+                jpeg_bytes = jpeg.encode(resized, quality=70)
+                b64 = base64.b64encode(jpeg_bytes).decode('utf-8')
+                await self.send(text_data=b64)
+                # _, jpeg = cv2.imencode('.jpg', resized)
+                # b64 = base64.b64encode(jpeg.tobytes()).decode('utf-8')
+                # await self.send(text_data=b64)
+
+            await asyncio.sleep(0.5)  # ~3 FPS for thumbnail (adjust per use)
+    #960x540
     def get_rtsp_url_from_config(self, camera_name):
         config = configparser.ConfigParser()
         config_path = os.path.join(os.path.dirname(__file__), "pw", "camera_config.ini")

@@ -3,6 +3,10 @@ import configparser
 from django.http import StreamingHttpResponse, HttpResponseNotFound
 import os
 import time
+from .services.rtsp_pool import CameraPool
+from turbojpeg import TurboJPEG
+
+jpeg = TurboJPEG()
 
 def mjpeg_stream(request, camera_id):
     # Load RTSP config
@@ -23,16 +27,22 @@ def mjpeg_stream(request, camera_id):
         return HttpResponseNotFound("Incomplete camera info")
 
     rtsp_url = f"rtsp://{username}:{password}@{ip}/{path}"
-    cap = cv2.VideoCapture(rtsp_url)
+
+    # 🔁 Use shared camera from pool
+    camera = CameraPool.get_camera(camera_id, rtsp_url)
 
     def frame_generator():
         while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            _, jpeg = cv2.imencode('.jpg', frame)
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
-            time.sleep(0.05)
+            frame = camera.get_frame()
+            if frame is not None:
+                # Optional: resize for lighter MJPEG
+                resized = cv2.resize(frame, (640, 360))  # or (320, 180) for ultra-low
+                jpeg_bytes = jpeg.encode(resized, quality=70)
+
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' +
+                       jpeg_bytes + b'\r\n')
+
+            time.sleep(0.05)  # ~10 FPS (adjust for lower server load)
 
     return StreamingHttpResponse(frame_generator(), content_type='multipart/x-mixed-replace; boundary=frame')

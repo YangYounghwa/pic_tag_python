@@ -4,7 +4,7 @@ let locationName = '';
 let userLocations = {}; // 사용자별 위치 정보 저장
 let streamSocket = null;
 
-const MAIN_CAMERA_INTERVAL = 100; // ms (2 FPS)
+const MAIN_CAMERA_INTERVAL = 50; 
 let lastMainFrameTime = 0;
 // 사용자 위치 정보 관리 함수
 function getUserLocationById(userId) {
