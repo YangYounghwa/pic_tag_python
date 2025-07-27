@@ -6,27 +6,27 @@ import numpy as np
 from .services.rtsp_pool import CameraPool
 import configparser
 import os
-from turbojpeg import TurboJPEG
-jpeg = TurboJPEG()
+from urllib.parse import parse_qs
+# from turbojpeg import TurboJPEG
+# jpeg = TurboJPEG()
 
 
 class CameraStreamConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.camera_id = self.scope['url_route']['kwargs']['camera_id']
-        self.rtsp_url = self.get_rtsp_url_from_config(self.camera_id)
+        self.query_params = parse_qs(self.scope["query_string"].decode())
+        self.is_thumbnail = self.query_params.get("thumb", ["0"])[0] == "1"
 
+        self.rtsp_url = self.get_rtsp_url_from_config(self.camera_id)
         if not self.rtsp_url:
-            print(f"❌ Camera config missing: {self.camera_id}")
             await self.close()
             return
 
-        # Use shared camera instance
         self.camera = CameraPool.get_camera(self.camera_id, self.rtsp_url)
-
         await self.accept()
+
         self.running = True
         self.stream_task = asyncio.create_task(self.send_stream())
-        print(f"✅ WebSocket connected for {self.camera_id}")
 
     async def disconnect(self, close_code):
         self.running = False
@@ -38,18 +38,14 @@ class CameraStreamConsumer(AsyncWebsocketConsumer):
         while self.running:
             frame = self.camera.get_frame()
             if frame is not None:
-                resized = cv2.resize(frame, (320, 180))
-                # Encode frame as JPEG and base64
+                if self.is_thumbnail:
+                    frame = cv2.resize(frame, (320, 180))  # or 160x90
 
-                # Encode using TurboJPEG (faster and lower CPU)
-                jpeg_bytes = jpeg.encode(resized, quality=70)
-                b64 = base64.b64encode(jpeg_bytes).decode('utf-8')
+                _, jpeg = cv2.imencode('.jpg', frame)
+                b64 = base64.b64encode(jpeg.tobytes()).decode('utf-8')
                 await self.send(text_data=b64)
-                # _, jpeg = cv2.imencode('.jpg', resized)
-                # b64 = base64.b64encode(jpeg.tobytes()).decode('utf-8')
-                # await self.send(text_data=b64)
 
-            await asyncio.sleep(0.5)  # ~3 FPS for thumbnail (adjust per use)
+            await asyncio.sleep(0.2 if self.is_thumbnail else 0.05)
     #960x540
     def get_rtsp_url_from_config(self, camera_name):
         config = configparser.ConfigParser()
