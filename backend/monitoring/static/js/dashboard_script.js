@@ -711,49 +711,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// 키보드 단축키
-document.addEventListener('keydown', function (e) {
-    // 스페이스바로 재생/일시정지
-    if (e.code === 'Space' && document.getElementById('monitoring').style.display !== 'none') {
-        e.preventDefault();
-        const playBtn = document.querySelector('.video-controls button');
-        if (playBtn) playBtn.click();
-    }
-
-    // 숫자 키로 카메라 선택
-    if (e.code >= 'Digit1' && e.code <= 'Digit4') {
-        const cameraIndex = parseInt(e.code.charAt(5)) - 1;
-        const cameras = document.querySelectorAll('.camera-thumb');
-        if (cameras[cameraIndex]) {
-            cameras[cameraIndex].click();
-        }
-    }
-});
-
-// 터치 지원 (모바일)
-let touchStartX = 0;
-document.addEventListener('touchstart', function (e) {
-    touchStartX = e.touches[0].clientX;
-});
-
-document.addEventListener('touchend', function (e) {
-    const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchStartX - touchEndX;
-
-    // 스와이프로 카메라 전환
-    if (Math.abs(diff) > 50) {
-        const activeCamera = document.querySelector('.camera-thumb.active');
-        const cameras = Array.from(document.querySelectorAll('.camera-thumb'));
-        const currentIndex = cameras.indexOf(activeCamera);
-
-        if (diff > 0 && currentIndex < cameras.length - 1) {
-            cameras[currentIndex + 1].click();
-        } else if (diff < 0 && currentIndex > 0) {
-            cameras[currentIndex - 1].click();
-        }
-    }
-});
-
 
 
 
@@ -770,7 +727,7 @@ function connectThumbCameras() {
 
     cameraIds.forEach((cameraId) => {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws/camera/${cameraId}/`;
+        const wsUrl = `${protocol}//${window.location.host}/ws/camera/${cameraId}/?thumb=1`;
 
         const socket = new WebSocket(wsUrl);
         thumbSockets[cameraId] = socket;
@@ -798,7 +755,6 @@ function stopMainCamera() {
     document.getElementById("mainVideoPlaceholder").style.display = "block";
 }
 
-// When user selects camera
 function selectCamera(element, location, camId) {
     const thumbs = document.querySelectorAll('.camera-thumb');
     thumbs.forEach(thumb => thumb.classList.remove('active'));
@@ -808,39 +764,20 @@ function selectCamera(element, location, camId) {
     videoInfo.textContent = `${location} - ${camId}`;
 
     const mainVideo = document.getElementById('mainCamera');
+    const placeholder = document.getElementById('mainVideoPlaceholder');
 
-    if (mainVideo) {
-        mainVideo.srcObject = null;
-        mainVideo.style.transform = '';
-        mainVideo.style.filter = '';
-        startStreamSocket(camId);  // <== new function to connect and stream RTSP via WebSocket
-    }
-}
-// Call after login
-window.addEventListener('DOMContentLoaded', () => {
-    connectThumbCameras();
-});
-
-
-function startStreamSocket(camId) {
-    if (streamSocket) {
-        streamSocket.close();
+    // Close previous WebSocket if any
+    if (mainSocket) {
+        mainSocket.close();
+        mainSocket = null;
     }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = `${protocol}//${window.location.host}/ws/camera/${camId}/`;
-    streamSocket = new WebSocket(url);
+    const wsUrl = `${protocol}//${window.location.host}/ws/camera/${camId}/`;  // No thumb=1 → high-res
 
-    const mainVideo = document.getElementById("mainCamera");
-    const placeholder = document.getElementById("mainVideoPlaceholder");
+    mainSocket = new WebSocket(wsUrl);
 
-    streamSocket.onopen = () => {
-        console.log("✅ RTSP WebSocket connected:", camId);
-        mainVideo.style.display = "block";
-        placeholder.style.display = "none";
-    };
-
-    streamSocket.onmessage = (event) => {
+    mainSocket.onmessage = (event) => {
         const img = new Image();
         img.onload = function () {
             const canvas = document.createElement("canvas");
@@ -849,18 +786,90 @@ function startStreamSocket(camId) {
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0);
             mainVideo.src = canvas.toDataURL("image/jpeg");
+            mainVideo.style.display = "block";
+            placeholder.style.display = "none";
         };
         img.src = "data:image/jpeg;base64," + event.data;
     };
 
-    streamSocket.onerror = (err) => {
-        console.error("❌ WebSocket error:", err);
+    mainSocket.onopen = () => {
+        console.log(`✅ WebSocket opened for main camera: ${camId}`);
     };
 
-    streamSocket.onclose = () => {
-        console.log("⚠️ WebSocket closed");
+    mainSocket.onerror = (err) => {
+        console.error("❌ Main WebSocket error:", err);
+        placeholder.innerText = "WebSocket error";
         placeholder.style.display = "block";
-        placeholder.innerHTML = "카메라 연결 종료";
+    };
+
+    mainSocket.onclose = () => {
+        console.log(`⚠️ WebSocket closed for main camera: ${camId}`);
+        placeholder.style.display = "block";
+        mainVideo.style.display = "none";
     };
 }
+
+mainCamera.onload = () => {
+    console.log("Image size:",mainCamera.naturalWidth,mainCamera.naturalHeight);
+}
+
+
+
+
+// DOM 로딩이 끝나면 실행되는 코드. 처음 시작되는 코드.
+
+window.addEventListener('DOMContentLoaded', () => {
+    connectThumbCameras();
+
+        // 👇 Auto-select default camera (e.g., 'camera1')
+    const defaultCameraId = 'camera1';
+    const defaultLocation = '현관 입구';  // Or actual location if known
+    const defaultElement = document.getElementById(`thumb-${defaultCameraId}`);
+
+    if (defaultElement) {
+        selectCamera(defaultElement, defaultLocation, defaultCameraId);
+    }
+});
+
+// function startStreamSocket(camId) {
+//     if (streamSocket) {
+//         streamSocket.close();
+//     }
+
+//     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+//     const url = `${protocol}//${window.location.host}/ws/camera/${camId}/`;
+//     streamSocket = new WebSocket(url);
+
+//     const mainVideo = document.getElementById("mainCamera");
+//     const placeholder = document.getElementById("mainVideoPlaceholder");
+
+//     streamSocket.onopen = () => {
+//         console.log("✅ RTSP WebSocket connected:", camId);
+//         mainVideo.style.display = "block";
+//         placeholder.style.display = "none";
+//     };
+
+//     streamSocket.onmessage = (event) => {
+//         const img = new Image();
+//         img.onload = function () {
+//             const canvas = document.createElement("canvas");
+//             canvas.width = img.width;
+//             canvas.height = img.height;
+//             const ctx = canvas.getContext("2d");
+//             ctx.drawImage(img, 0, 0);
+//             mainVideo.src = canvas.toDataURL("image/jpeg");
+//         };
+//         img.src = "data:image/jpeg;base64," + event.data;
+//     };
+
+//     streamSocket.onerror = (err) => {
+//         console.error("❌ WebSocket error:", err);
+//     };
+
+//     streamSocket.onclose = () => {
+//         console.log("⚠️ WebSocket closed");
+//         placeholder.style.display = "block";
+//         placeholder.innerHTML = "카메라 연결 종료";
+//     };
+// }
 

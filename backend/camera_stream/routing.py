@@ -1,7 +1,8 @@
 
 from django.urls import path
 from . import consumers
-
+from django.urls import re_path
+from .consumers import CameraStreamConsumer
 print("[camera.routing] LOADED")
 
 async def test_ws_view(scope, receive, send):
@@ -14,6 +15,5 @@ async def test_ws_view(scope, receive, send):
     })
 
 websocket_urlpatterns = [
-    path("ws/test/", test_ws_view),
-    path("ws/camera/<str:camera_id>/", consumers.CameraStreamConsumer.as_asgi()),
+    re_path(r'ws/camera/(?P<camera_id>[^/]+)/$', consumers.CameraStreamConsumer.as_asgi()),
 ]
