@@ -68,7 +68,7 @@
                         <div class="main-video-area">
                             <div class="main-video">
                                 <div class="video-info" id="mainVideoInfo">카메라를 선택하세요</div>
-                                <video id="mainWebcam" autoplay muted style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                                <video id="mainCamera" autoplay muted style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
                                 <div id="mainVideoPlaceholder" style="color: white; text-align: center; padding: 20px; font-size: 18px;">
                                     카메라를 선택하세요
                                 </div>
@@ -84,11 +84,11 @@
                         </div>
                         
                         <div class="camera-grid">
-                            <div class="camera-thumb" onclick="selectCamera(this, '현관 입구', 'entrance')">
+                            <div class="camera-thumb" onclick="selectCamera(this, '현관 입구', 'camera1')">
                                 <div class="thumb-video" id="thumb-entrance">연결 대기중</div>
                                 <div class="thumb-info">현관 입구</div>
                             </div>
-                            <div class="camera-thumb" onclick="selectCamera(this, '주차장', 'parking')">
+                            <div class="camera-thumb" onclick="selectCamera(this, '주차장', 'camera2')">
                                 <div class="thumb-video" id="thumb-parking">연결 대기중</div>
                                 <div class="thumb-info">주차장</div>
                             </div>
