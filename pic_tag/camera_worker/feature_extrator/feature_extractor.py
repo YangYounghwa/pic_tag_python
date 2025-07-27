@@ -18,7 +18,8 @@ from torchvision.ops import RoIAlign
 from torchvision import transforms
 from ultralytics import YOLO
 
-from .ReID_modelv2 import YOLOv11ReID
+
+from .ReID_attenv2 import ReIDAtten_v2
 import random
 import numpy as np
 import time
@@ -37,8 +38,8 @@ def extract_features(frame_queue,feature_queue ):
     
     device = torch.device("cpu")
     
-    model3 = YOLOv11ReID()
-    model3.load_state_dict(torch.load(os.path.join(base_dir, "reid_model_state_dict_0724_2.pth"), map_location=device))
+    model3 = ReIDAtten_v2()
+    model3.load_state_dict(torch.load(os.path.join(base_dir, "ReIDAttenv2_14999.pth"), map_location=device))
 
     model3.eval()
     model3.to(device)

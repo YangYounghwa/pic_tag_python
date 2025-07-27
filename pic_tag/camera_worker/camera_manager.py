@@ -9,8 +9,32 @@ from .feature_extrator import extract_features
 from .grouper import IdentityEngine
 import queue as Queue
 from .grouper.id_logger import IdentityLogger
-
+import configparser
 from pathlib import Path
+
+
+def get_rtsp_url_from_config(camera_name):
+    config = configparser.ConfigParser()
+    config_path = os.path.join(os.path.dirname(__file__), "pw", "camera_config.ini")
+    config.read(config_path)
+
+    if camera_name not in config:
+        print(f"❌ Camera '{camera_name}' not found in config.")
+        return None
+
+    cam = config[camera_name]
+    ip = cam.get("ip")
+    username = cam.get("username")
+    password = cam.get("password")
+    path = cam.get("path2")  # or "path1"
+
+    if not all([ip, username, password, path]):
+        print(f"❌ Missing values for camera: {camera_name}")
+        return None
+
+    return f"rtsp://{username}:{password}@{ip}/{path}"
+
+
 
 def start_all_cameras(folder: Path = None):
     # Connect to the SQLite database to retrieve camera configurations in real production
@@ -22,7 +46,12 @@ def start_all_cameras(folder: Path = None):
     folder.mkdir(parents=True, exist_ok=True)
     log_db_path = folder / "db" / "identity_log.db"
     log_db_path.parent.mkdir(parents=True, exist_ok=True) 
-   
+
+
+    config = configparser.ConfigParser()
+    config_path = os.path.join(os.path.dirname(__file__), "pw", "camera_config.ini")
+    config.read(config_path)
+    camera_names = config.sections()
     
     
     logger = IdentityLogger(log_db_path)
@@ -40,7 +69,18 @@ def start_all_cameras(folder: Path = None):
     grouper_thread.start()
     
     
-    for i in range(1):
-        camera_id = i
-        camera_thread = threading.Thread(target=capture_frames, args=(camera_id, frame_queue, data_dir, None)  )
+    # for i in range(1):
+    #     camera_id = i
+    #     camera_thread = threading.Thread(target=capture_frames, args=(camera_id, frame_queue, data_dir, None)  )
+    #     camera_thread.start()
+
+    for camera_name in camera_names:
+        rtsp_url = get_rtsp_url_from_config(camera_name)
+        if not rtsp_url:
+            continue
+
+        camera_thread = threading.Thread(
+            target=capture_frames,
+            args=(rtsp_url, frame_queue, data_dir, None)
+        )
         camera_thread.start()
