@@ -2,6 +2,8 @@
 let currentLocation = '';
 let locationName = '';
 let userLocations = {}; // 사용자별 위치 정보 저장
+let streamSocket = null;
+
 
 // 사용자 위치 정보 관리 함수
 function getUserLocationById(userId) {
@@ -61,8 +63,7 @@ function logout() {
     document.getElementById('location').value = '';
 
     // 웹캠 중지
-    stopWebcam();
-
+    closeAllCameraSockets() 
     // WebSocket 연결 종료
     if (socket) {
         socket.close();
@@ -100,45 +101,57 @@ function selectCamera(element, location, camId) {
     const videoInfo = document.querySelector('.video-info');
     videoInfo.textContent = `${location} - ${camId}`;
 
-    const mainVideo = document.getElementById('mainWebcam');
+    const mainVideo = document.getElementById('mainCamera');
 
-    if (webcamStream && mainVideo) {
-        // 메인 비디오에 웹캠 스트림 적용
-        mainVideo.srcObject = webcamStream;
-
-        // 각 카메라 타입에 따라 다른 스타일 적용
-        switch (camId) {
-            case 'CAM01': // 실시간 웹캠
-                mainVideo.style.transform = '';
-                mainVideo.style.filter = '';
-                break;
-            case 'CAM02': // 웹캠 미러모드
-                mainVideo.style.transform = 'scaleX(-1)';
-                mainVideo.style.filter = '';
-                break;
-            case 'CAM03': // 시뮬레이션 카메라 (오프라인)
-                mainVideo.srcObject = null;
-                mainVideo.style.transform = '';
-                mainVideo.style.filter = '';
-                break;
-            case 'CAM04': // 웹캠 (흑백)
-                mainVideo.style.transform = '';
-                mainVideo.style.filter = 'grayscale(100%)';
-                break;
-            default: // 원격 사용자 스트림
-                if (camId.startsWith('REMOTE_')) {
-                    const userId = camId.replace('REMOTE_', '');
-                    if (remoteStreams[userId]) {
-                        mainVideo.srcObject = remoteStreams[userId];
-                        mainVideo.style.transform = '';
-                        mainVideo.style.filter = '';
-                    }
-                }
-                break;
-        }
-
-        console.log(`메인 비디오가 ${location}로 전환되었습니다.`);
+    if (mainVideo) {
+        mainVideo.srcObject = null;
+        mainVideo.style.transform = '';
+        mainVideo.style.filter = '';
+        startStreamSocket(camId);  // <== new function to connect and stream RTSP via WebSocket
     }
+}
+
+
+function startStreamSocket(camId) {
+    if (streamSocket) {
+        streamSocket.close();
+    }
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const url = `${protocol}//${window.location.host}/ws/camera/${camId}/`;
+    streamSocket = new WebSocket(url);
+
+    const mainVideo = document.getElementById("mainCamera");
+    const placeholder = document.getElementById("mainVideoPlaceholder");
+
+    streamSocket.onopen = () => {
+        console.log("✅ RTSP WebSocket connected:", camId);
+        mainVideo.style.display = "block";
+        placeholder.style.display = "none";
+    };
+
+    streamSocket.onmessage = (event) => {
+        const img = new Image();
+        img.onload = function () {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            mainVideo.src = canvas.toDataURL("image/jpeg");
+        };
+        img.src = "data:image/jpeg;base64," + event.data;
+    };
+
+    streamSocket.onerror = (err) => {
+        console.error("❌ WebSocket error:", err);
+    };
+
+    streamSocket.onclose = () => {
+        console.log("⚠️ WebSocket closed");
+        placeholder.style.display = "block";
+        placeholder.innerHTML = "카메라 연결 종료";
+    };
 }
 
 // 영상 재생/일시정지
@@ -212,9 +225,6 @@ function switchTheme(theme) {
     window.location.href = `/?theme=${theme}`;
 }
 
-// 웹캠 관련 변수
-let webcamStream = null;
-let isWebcamActive = false;
 
 // WebRTC 관련 변수
 let socket = null;
@@ -230,107 +240,17 @@ const iceServers = {
     ]
 };
 
-// 웹캠 초기화 함수
-async function initWebcam() {
-    try {
-        // 브라우저 보안 확인
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            throw new Error('브라우저에서 웹캠을 지원하지 않습니다.');
-        }
 
-        // HTTPS 연결 확인 (localhost 제외)
-        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-            console.warn('HTTP 연결에서 웹캠 접근이 제한될 수 있습니다.');
-            // Chrome의 경우 insecure origins에서 webcam 접근을 차단
-            if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1) {
-                showWebcamError('Chrome에서는 HTTPS 연결이 필요합니다.<br>또는 브라우저 설정에서 이 사이트를 안전한 사이트로 추가하세요.<br><br><strong>해결방법:</strong><br>1. Chrome 주소창에 chrome://flags/#unsafely-treat-insecure-origin-as-secure 입력<br>2. 이 사이트 주소를 추가하고 재시작');
-                return;
-            }
-        }
 
-        const constraints = {
-            video: {
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-                facingMode: 'user'
-            },
-            audio: false
-        };
 
-        console.log('웹캠 권한 요청 중...');
-        webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
 
-        isWebcamActive = true;
-        console.log(`웹캠이 성공적으로 초기화되었습니다. 위치: ${locationName}`);
-
-        // 성공 메시지 표시
-        showWebcamSuccess();
-
-    } catch (error) {
-        console.error('웹캠 접근 오류:', error);
-        handleWebcamError(error);
+function closeAllCameraSockets() {
+    for (const socket of Object.values(cameraSockets)) {
+        socket.close();
     }
 }
 
-// 웹캠 에러 처리
-function handleWebcamError(error) {
-    let errorMessage = '웹캠에 접근할 수 없습니다.';
 
-    if (error.name === 'NotAllowedError') {
-        errorMessage = '웹캠 접근이 거부되었습니다.<br><br><strong>해결방법:</strong><br>1. 브라우저 주소창의 카메라 아이콘 클릭<br>2. "허용"으로 변경<br>3. 페이지 새로고침';
-    } else if (error.name === 'NotFoundError') {
-        errorMessage = '카메라를 찾을 수 없습니다.<br>카메라가 연결되어 있는지 확인해주세요.';
-    } else if (error.name === 'NotSupportedError') {
-        errorMessage = 'HTTPS 연결이 필요합니다.<br>또는 브라우저에서 웹캠을 지원하지 않습니다.';
-    } else {
-        errorMessage = `웹캠 오류: ${error.message}<br><br>다른 프로그램에서 카메라를 사용 중일 수 있습니다.`;
-    }
-
-    showWebcamError(errorMessage);
-}
-
-// 웹캠 에러 메시지 표시
-function showWebcamError(message) {
-    const placeholder = document.getElementById('mainVideoPlaceholder');
-    if (placeholder) {
-        placeholder.innerHTML = `<div style="color: #ff6b6b; padding: 20px; font-size: 14px; line-height: 1.5;">${message}</div>`;
-    }
-}
-
-// 웹캠 성공 메시지 표시
-function showWebcamSuccess() {
-    const placeholder = document.getElementById('mainVideoPlaceholder');
-    if (placeholder) {
-        placeholder.innerHTML = `<div style="color: #51cf66; padding: 20px; font-size: 16px;">${locationName} 웹캠이 활성화되었습니다.<br>다른 사용자들이 이 카메라를 볼 수 있습니다.</div>`;
-    }
-}
-
-// 웹캠 중지 함수
-function stopWebcam() {
-    if (webcamStream) {
-        webcamStream.getTracks().forEach(track => track.stop());
-        webcamStream = null;
-        isWebcamActive = false;
-        console.log('웹캠이 중지되었습니다.');
-    }
-}
-
-// 웹캠 켜기/끄기 토글 함수
-function toggleWebcam() {
-    if (isWebcamActive) {
-        stopWebcam();
-        // 비디오 요소들 숨기기
-        const videos = ['mainWebcam', 'thumbWebcam1', 'thumbWebcam2', 'thumbWebcam3'];
-        videos.forEach(id => {
-            const video = document.getElementById(id);
-            if (video) {
-                video.style.display = 'none';
-            }
-        });
-    } else {
-        initWebcam();
-    }
-}
 
 // 실시간 시간 업데이트
 function updateTime() {
@@ -463,39 +383,53 @@ document.addEventListener('DOMContentLoaded', function () {
     updateTime();
 });
 
-// WebSocket 연결 초기화
-function initWebSocket() {
+function initWebSocket(cameraId = "camera1") {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/video_call/`;
+    const wsUrl = `${protocol}//${window.location.host}/ws/camera/${cameraId}/`;
+
+    if (socket) {
+        socket.close();  // 이전 소켓 정리
+    }
 
     socket = new WebSocket(wsUrl);
 
-    socket.onopen = function (event) {
-        console.log('WebSocket 연결됨');
-        // 위치 정보 전송
-        socket.send(JSON.stringify({
-            type: 'location_info',
-            location: currentLocation,
-            location_name: locationName
-        }));
+    socket.onopen = function () {
+        console.log(`📡 WebSocket 연결됨: ${cameraId}`);
+        // 위치 정보를 서버에 보낼 필요가 없는 경우 생략 가능
     };
 
     socket.onmessage = function (event) {
-        const data = JSON.parse(event.data);
-        handleWebSocketMessage(data);
+        const base64 = event.data;
+        const mainVideo = document.getElementById("mainCamera");
+        const placeholder = document.getElementById("mainVideoPlaceholder");
+
+        const img = new Image();
+        img.onload = function () {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            const dataURL = canvas.toDataURL("image/jpeg");
+
+            mainVideo.src = dataURL;
+            mainVideo.style.display = "block";
+            if (placeholder) placeholder.style.display = "none";
+        };
+        img.src = "data:image/jpeg;base64," + base64;
     };
 
-    socket.onclose = function (event) {
-        console.log('WebSocket 연결 종료');
+    socket.onclose = function () {
+        console.log(`⚠️ WebSocket 종료됨: ${cameraId}`);
         setTimeout(() => {
             if (document.getElementById('dashboardPage').style.display !== 'none') {
-                initWebSocket(); // 대시보드가 표시 중일 때만 재연결
+                initWebSocket(cameraId);  // 자동 재연결
             }
         }, 3000);
     };
 
     socket.onerror = function (error) {
-        console.error('WebSocket 오류:', error);
+        console.error(`❌ WebSocket 오류 (${cameraId}):`, error);
     };
 }
 
@@ -568,13 +502,7 @@ async function createPeerConnection(userId, userLocation, locationName) {
             displayRemoteStream(userId, event.streams[0], userLocation, locationName);
         };
 
-        // 내 스트림 추가 (위치 기반 사용자만)
-        if (webcamStream && currentLocation !== 'admin') {
-            webcamStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, webcamStream);
-            });
-            console.log('내 웹캠 스트림 추가됨');
-        }
+
 
         // Offer 생성 및 전송
         const offer = await peerConnection.createOffer();
@@ -620,12 +548,7 @@ async function handleOffer(data) {
         };
 
         // 내 스트림 추가 (위치 기반 사용자만)
-        if (webcamStream && currentLocation !== 'admin') {
-            webcamStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, webcamStream);
-            });
-            console.log('내 웹캠 스트림 추가됨 (Answer)');
-        }
+
 
         // Offer 설정 및 Answer 생성
         await peerConnection.setRemoteDescription(data.offer);
@@ -694,35 +617,17 @@ function displayRemoteStream(userId, stream, userLocation, locationName) {
     }
 }
 
-// Peer Connection 종료
-function closePeerConnection(userId) {
-    if (peerConnections[userId]) {
-        peerConnections[userId].close();
-        delete peerConnections[userId];
-    }
-    if (remoteStreams[userId]) {
-        delete remoteStreams[userId];
-    }
 
-    // 해당 사용자의 썸네일 정리
-    const thumbnails = document.querySelectorAll('.camera-thumb');
-    thumbnails.forEach(thumb => {
-        const infoDiv = thumb.querySelector('.thumb-info');
-        if (infoDiv && infoDiv.textContent === `사용자 ${userId}`) {
-            const video = thumb.querySelector('video');
-            if (video) {
-                video.srcObject = null;
-            }
-            infoDiv.textContent = '연결 대기중';
-            thumb.setAttribute('onclick', `selectCamera(this, '연결 대기중', 'EMPTY')`);
-        }
-    });
-}
 
-// 대시보드 표시 시 웹캠 시작
+
 function showDashboard() {
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('dashboardPage').style.display = 'block';
+
+    Object.entries(cameraMap).forEach(([domId, cameraId]) => {
+        startCameraTileStream(domId, cameraId);
+    });
+
 
     // 사용자 정보 업데이트
     const userInfo = document.querySelector('.user-info span');
@@ -730,14 +635,7 @@ function showDashboard() {
         userInfo.textContent = locationName || '관리자';
     }
 
-    // 웹캠 및 WebSocket 초기화
-    setTimeout(async () => {
-        // 위치 기반 사용자(관리자 제외)는 웹캠 시작
-        if (currentLocation !== 'admin') {
-            await initWebcam();
-        }
-        initWebSocket();
-    }, 1000);
+
 }
 
 // === 통계 데이터 및 차트 ===
@@ -762,6 +660,16 @@ const cameraNames = {
     3: '복도',
     4: '비상구'
 };
+
+
+const cameraMap = {
+    entrance: "camera1",
+    parking: "camera2",
+    hallway: "camera3",
+    emergency: "camera4"
+};
+
+const cameraSockets = {};
 
 let charts = {};
 
@@ -1020,3 +928,43 @@ document.addEventListener('touchend', function (e) {
         }
     }
 });
+
+
+function startCameraTileStream(domId, cameraId) {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/camera/${cameraId}/`;
+
+    const container = document.getElementById(`thumb-${domId}`);
+    if (!container) return;
+
+    const socket = new WebSocket(wsUrl);
+    cameraSockets[domId] = socket;
+
+    socket.onopen = () => {
+        console.log(`🟢 ${domId} 연결됨: ${cameraId}`);
+        container.innerHTML = ""; // Clear placeholder
+        const img = document.createElement("img");
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "cover";
+        img.id = `img-${domId}`;
+        container.appendChild(img);
+    };
+
+    socket.onmessage = (event) => {
+        const imgEl = document.getElementById(`img-${domId}`);
+        if (imgEl) {
+            imgEl.src = "data:image/jpeg;base64," + event.data;
+        }
+    };
+
+    socket.onerror = (err) => {
+        console.error(`❌ ${domId} 소켓 오류`, err);
+    };
+
+    socket.onclose = () => {
+        console.log(`⚠️ ${domId} 연결 종료됨`);
+        container.innerHTML = "연결 종료됨";
+    };
+}
+

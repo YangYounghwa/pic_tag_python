@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "channels",
     "monitoring",
+    "camera",
 ]
 
 MIDDLEWARE = [
@@ -85,7 +86,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 
-WSGI_APPLICATION = "backend.wsgi.application"
+# WSGI_APPLICATION = "backend.wsgi.application"
 ASGI_APPLICATION = "backend.asgi.application"
 
 # Channels Layer

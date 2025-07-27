@@ -20,6 +20,7 @@ detected_images/
 .env
 local_settings.py
 *.ini
+*pw/
 
 
 .DS_Store
@@ -27,6 +28,8 @@ img/
 
 *debug.ipynb
 *.ipynb_checkpoints
+
+
 
 
 
