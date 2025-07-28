@@ -4,6 +4,7 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
+
 class StatisticsFromDB:
     def __init__(self, db_path):
         """Initialize with a file-based SQLite database."""
@@ -18,7 +19,8 @@ class StatisticsFromDB:
         """Create identity_log table if it doesn't exist."""
         try:
             cursor = self.db_connection.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS identity_log (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -31,7 +33,8 @@ class StatisticsFromDB:
                     bb_x2 INTEGER,
                     bb_y2 INTEGER
                 )
-            """)
+            """
+            )
             self.db_connection.commit()
             cursor.close()
         except sqlite3.Error as e:
@@ -53,25 +56,31 @@ class StatisticsFromDB:
         cursor = self.db_connection.cursor()
         base_time = datetime(2023, 10, 1, 12, 0, 0)
         entries_per_person = num_entries // 10  # 10 person_ids (0-9)
-        
+
         for person_id in range(10):
             stay_duration = (person_id + 1) * 10  # 체류 시간(분): 10, 20, ..., 100
             for i in range(entries_per_person):
-                minutes_offset = i * (stay_duration / (entries_per_person - 1)) if entries_per_person > 1 else 0
-                timestamp = (base_time + timedelta(minutes=minutes_offset)).strftime('%Y-%m-%d %H:%M:%S')
+                minutes_offset = (
+                    i * (stay_duration / (entries_per_person - 1))
+                    if entries_per_person > 1
+                    else 0
+                )
+                timestamp = (base_time + timedelta(minutes=minutes_offset)).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
                 cursor.execute(
                     "INSERT INTO identity_log (timestamp, person_id, embedding, file_path, camera_id, bb_x1, bb_y1, bb_x2, bb_y2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (
                         timestamp,
                         person_id,
-                        f'embedding_{person_id}_{i}',
-                        f'/path/to/image_{person_id}_{i}.jpg',
+                        f"embedding_{person_id}_{i}",
+                        f"/path/to/image_{person_id}_{i}.jpg",
                         person_id % 5,
                         i * 10,
                         i * 15,
                         i * 20 + 50,
-                        i * 25 + 50
-                    )
+                        i * 25 + 50,
+                    ),
                 )
         self.db_connection.commit()
         cursor.close()
@@ -127,47 +136,77 @@ class StatisticsFromDB:
         stay_times = {}
         for row in statistics:
             person_id = row[2]
-            timestamp = datetime.strptime(row[1], '%Y-%m-%d %H:%M:%S')
+            timestamp = datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S")
             if person_id not in stay_times:
                 stay_times[person_id] = [timestamp, timestamp]
             else:
                 stay_times[person_id][0] = min(stay_times[person_id][0], timestamp)
                 stay_times[person_id][1] = max(stay_times[person_id][1], timestamp)
-        
-        return {person_id: (end - start).total_seconds() 
-                for person_id, (start, end) in stay_times.items()}
+
+        return {
+            person_id: (end - start).total_seconds()
+            for person_id, (start, end) in stay_times.items()
+        }
+
+    def calculate_current_visitors(self, statistics):
+        """Calculate the number of visitors currently present in the system."""
+        if not self.validate_statistics(statistics):
+            return 0
+        current_time = datetime.now()
+        one_minute_ago = current_time - timedelta(minutes=1)
+        current_visitors = {
+            row[2]
+            for row in statistics
+            if datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S") > one_minute_ago
+        }
+        return len(current_visitors)
 
     def save_statistics_to_csv(self, output_path, statistics):
         """Save statistics and computed metrics to a CSV file."""
         try:
             visitor_count = self.calculate_visitor_count(statistics)
             stay_times = self.calculate_stay_times(statistics)
-            
+            current_visitors = self.calculate_current_visitors(statistics)
+
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-            
-            with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
-                fieldnames = ['id', 'timestamp', 'person_id', 'embedding', 'file_path', 
-                            'camera_id', 'bb_x1', 'bb_y1', 'bb_x2', 'bb_y2', 
-                            'visitor_count', 'stay_time']
+
+            with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
+                fieldnames = [
+                    "id",
+                    "timestamp",
+                    "person_id",
+                    "embedding",
+                    "file_path",
+                    "camera_id",
+                    "bb_x1",
+                    "bb_y1",
+                    "bb_x2",
+                    "bb_y2",
+                    "visitor_count",
+                    "stay_time",
+                ]
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
-                
+
                 for row in statistics:
                     person_id = row[2]
-                    writer.writerow({
-                        'id': row[0],
-                        'timestamp': row[1],
-                        'person_id': person_id,
-                        'embedding': row[3],
-                        'file_path': row[4],
-                        'camera_id': row[5],
-                        'bb_x1': row[6],
-                        'bb_y1': row[7],
-                        'bb_x2': row[8],
-                        'bb_y2': row[9] if len(row) > 9 else None,
-                        'visitor_count': visitor_count,
-                        'stay_time': stay_times.get(person_id, 0)
-                    })
+                    writer.writerow(
+                        {
+                            "id": row[0],
+                            "timestamp": row[1],
+                            "person_id": person_id,
+                            "embedding": row[3],
+                            "file_path": row[4],
+                            "camera_id": row[5],
+                            "bb_x1": row[6],
+                            "bb_y1": row[7],
+                            "bb_x2": row[8],
+                            "bb_y2": row[9] if len(row) > 9 else None,
+                            "visitor_count": visitor_count,
+                            "stay_time": stay_times.get(person_id, 0),
+                            "current_visitors": current_visitors,
+                        }
+                    )
             print(f"Statistics saved to {output_path}")
         except Exception as e:
             print(f"Error saving to CSV: {e}")
@@ -175,6 +214,7 @@ class StatisticsFromDB:
     def close_connection(self):
         """Close the database connection."""
         self.db_connection.close()
+
 
 """
 # 테스트 코드 (주석 처리)
@@ -211,6 +251,10 @@ def test_statistics_from_db(db_path=None):
     for person_id, stay_time in stay_times.items():
         expected = expected_stay_times[person_id]
         assert abs(stay_time - expected) < 1e-5, f"Expected {expected} seconds for person {person_id}, but got {stay_time}"
+
+    # 현재 체류 중인 방문자 수 계산
+    current_visitors = stats.calculate_current_visitors(rows)
+    assert current_visitors == 10, f"Expected 10 current visitors, but got {current_visitors}"
     
     # CSV로 저장
     stats.save_statistics_to_csv(rows, output_path)
