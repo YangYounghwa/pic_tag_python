@@ -5,8 +5,9 @@ from ast import arg
 import sqlite3
 import threading
 from .cropper import capture_frames
+from .cropper import capture_video_frames
 from .feature_extrator import extract_features
-from .grouper import IdentityEngine
+from .grouper import IdentityEnginev2
 import queue as Queue
 from .grouper.id_logger import IdentityLogger
 import configparser
@@ -17,6 +18,8 @@ def get_rtsp_url_from_config(camera_name):
     config = configparser.ConfigParser()
     config_path = os.path.join(os.path.dirname(__file__), "pw", "camera_config.ini")
     config.read(config_path)
+    
+
 
     if camera_name not in config:
         print(f"❌ Camera '{camera_name}' not found in config.")
@@ -26,7 +29,7 @@ def get_rtsp_url_from_config(camera_name):
     ip = cam.get("ip")
     username = cam.get("username")
     password = cam.get("password")
-    path = cam.get("path2")  # or "path1"
+    path = cam.get("path1")  # "path1" or "path2"
 
     if not all([ip, username, password, path]):
         print(f"❌ Missing values for camera: {camera_name}")
@@ -36,11 +39,12 @@ def get_rtsp_url_from_config(camera_name):
 
 
 
-def start_all_cameras(folder: Path = None):
+def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: list = None,max_fps=10):
     # Connect to the SQLite database to retrieve camera configurations in real production
    
-    
-    base_dir = Path(__file__).resolve().parent.parent.parent  # ⬅️ if __file__ is inside /project/app/core/
+    stop_event = threading.Event()
+    threads = []    
+    base_dir = Path(__file__).resolve().parent.parent.parent  
     if not folder:
         folder = base_dir / "data"
     folder.mkdir(parents=True, exist_ok=True)
@@ -58,29 +62,64 @@ def start_all_cameras(folder: Path = None):
     frame_queue = Queue.Queue(maxsize=250)
     feature_queue = Queue.Queue(maxsize=250)
 
-    project_dir = Path(__file__).resolve().parent 
-    data_dir = project_dir.parent / 'data'
+    
+    data_dir = folder
     
     
-    feature_extractor_thread = threading.Thread(target=extract_features,args=(frame_queue, feature_queue,))
+    feature_extractor_thread = threading.Thread(target=extract_features,args=(frame_queue, feature_queue,stop_event))
+    
+    
     feature_extractor_thread.start()
-    engine = IdentityEngine(feature_queue, sim_threshold=0.2,logger=logger, max_history=20000, max_age_sec=86400)
-    grouper_thread = threading.Thread(target=engine.run)  # Assuming camera_id 0 for the grouper
-    grouper_thread.start()
+    threads.append(feature_extractor_thread)
     
+    
+    engine = IdentityEnginev2(feature_queue, sim_threshold=0.80,logger=logger, max_history=2000, max_age_sec=86400)
+    grouper_thread = threading.Thread(target=engine.run,args=(stop_event,)) # Assuming camera_id 0 for the grouper
+    grouper_thread.start()
+    threads.append(grouper_thread)
     
     # for i in range(1):
     #     camera_id = i
     #     camera_thread = threading.Thread(target=capture_frames, args=(camera_id, frame_queue, data_dir, None)  )
     #     camera_thread.start()
+    
+    if live:
+        for index, camera_name in enumerate(camera_names):
+            print(f"Starting camera: {camera_name}")
+            rtsp_url = get_rtsp_url_from_config(camera_name)
+            if not rtsp_url:
+                continue
 
-    for camera_name in camera_names:
-        rtsp_url = get_rtsp_url_from_config(camera_name)
-        if not rtsp_url:
-            continue
+            camera_thread = threading.Thread(
+                target=capture_frames,
+                args=(rtsp_url, frame_queue, data_dir,  False, max_fps, stop_event,index)
+            )
+            camera_thread.start()
+            threads.append(camera_thread)
+    if not live:
+        for index, video_file in enumerate(camera_path_list):
+            print(f"Processing video file: {video_file}")
+            camera_thread = threading.Thread(
+                target=capture_video_frames,
+                args=(video_file, frame_queue, data_dir, True, max_fps, stop_event,index)
+            )
+            camera_thread.start()
+            threads.append(camera_thread)
+        
+        
+        
+        
+    print("Press 'q' and Enter to stop...")
+    while True:
+        user_input = input()
+        if user_input.strip().lower() == 'q':
+            print("Stopping...")
+            stop_event.set()
+            break
+        
+        
+        
+    for t in threads:
+        t.join()
 
-        camera_thread = threading.Thread(
-            target=capture_frames,
-            args=(rtsp_url, frame_queue, data_dir, None)
-        )
-        camera_thread.start()
+    print("All threads stopped.")

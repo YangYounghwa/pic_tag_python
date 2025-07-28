@@ -1,4 +1,8 @@
-.venv
+.venv/
+*/.venv/
+run_live.bat
+run_video.bat
+
 data/db/*
 data/images/*
 *.db

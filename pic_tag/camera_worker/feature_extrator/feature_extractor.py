@@ -28,7 +28,7 @@ import queue
 
 from .resizePad import ResizePad
 
-def extract_features(frame_queue,feature_queue ):
+def extract_features(frame_queue, feature_queue, stop_event=None):
     print("Feature extraction thread started.")
     sleep(4) 
     print("Starting feature extraction thread...")  
@@ -47,12 +47,13 @@ def extract_features(frame_queue,feature_queue ):
     # Debug line to confirm model loading
     print(f"Feature extraction model loaded and ready on {device}.")
 
-    
-    
-    while True:
+
+
+    while not stop_event.is_set():
         # Get a frame from the queue
+        frame_data = None
         try:
-            frame_data = frame_queue.get(timeout=0.2)
+            frame_data = frame_queue.get(timeout=0.05)
             # Mark the task as done
             frame_queue.task_done()
         except queue.Empty as e:
@@ -66,7 +67,7 @@ def extract_features(frame_queue,feature_queue ):
             continue  # Skip if no frame data is available
         # Debug line to show which frame is being processed
 
-        print(f"[{time.strftime('%H:%M:%S')}] Extracting features from frame: {frame_data['file_path']}")
+        # print(f"[{time.strftime('%H:%M:%S')}] Extracting features from frame: {frame_data['file_path']}")
         image = frame_data["cropped_image_rgb"]
         x1 = frame_data["bb_x1"]
         y1 = frame_data["bb_y1"]
