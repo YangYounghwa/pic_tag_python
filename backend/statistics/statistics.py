@@ -19,13 +19,20 @@ class StatisticsFromDB:
 
     def filter_outliers(self, statistics):
         """이상치(예: 너무 짧거나 긴 체류, 잘못된 bounding box 등) row를 제외."""
+        # 1. 체류 시간 계산
+        stay_times = self.calculate_stay_times(statistics)
         filtered = []
         for row in statistics:
-            # 예시: bounding box 좌표가 음수이거나, 너무 크면 제외
+            person_id = row[2]
+            # 2. 체류 시간이 기준에 맞지 않으면 제외
+            stay_time = stay_times.get(person_id, 0)
+            if stay_time < self.min_stay_seconds or stay_time > self.max_stay_seconds:
+                continue
+            # 3. bounding box 좌표가 음수이거나, 너무 크면 제외
             if any(coord is not None and (coord < 0 or coord > 10000) for coord in row[6:10]):
                 continue
-            # 예시: person_id, timestamp, file_path 등 결측값 제외
-            if row[2] is None or not row[1] or not row[4]:
+            # 4. person_id, timestamp, file_path 등 결측값 제외
+            if person_id is None or not row[1] or not row[4]:
                 continue
             filtered.append(row)
         return filtered
