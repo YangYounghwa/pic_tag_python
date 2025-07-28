@@ -2,6 +2,8 @@
 */.venv/
 run_live.bat
 run_video.bat
+*.mp4
+*/video_check/
 
 data/db/*
 data/images/*
