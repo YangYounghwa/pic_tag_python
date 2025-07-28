@@ -33,6 +33,7 @@ class IdentityLogger:
                 "INSERT INTO identity_log (timestamp, person_id, embedding, file_path, camera_id, bb_x1, bb_y1, bb_x2, bb_y2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (timestamp_str, person_id, emb_str, file_path, camera_id, *bounding_box)
             )
+            print(f"id : {person_id}")
 
     def close(self):
         self.conn.close()

@@ -5,6 +5,7 @@ from ultralytics import YOLO
 import datetime
 import queue
 import threading
+from .cropper_utils import make_folder, model_load, draw_bounding_box
 
 from pathlib import Path
 
@@ -18,37 +19,12 @@ global_image_sequence_counter = 0
 # display_frame_queue = queue.Queue(maxsize=2) 
 
 
-def model_load(model_name):
-    try:
-        model = YOLO(model_name)
-        print(f"'{model_name}' model loaded successfully.")
-        return model
-    except Exception as e:
-        print(f"Error loading '{model_name}': {e}")
-        return None
 
 
-def make_folder(folder_name):
-    if not os.path.exists(folder_name):
-        os.makedirs(folder_name)
-        print(f"{folder_name} folder created.")
-
-
-def draw_bounding_box(
-    image, bbox, class_name, confidence, color=(0, 255, 0), thickness=2, track_id=None
-):
-    x1, y1, x2, y2 = map(int, bbox)
-    cv2.rectangle(image, (x1, y1), (x2, y2), color, thickness)
-    label = f"{class_name}: {confidence:.2f}"
-    if track_id is not None:
-        label = f"ID{track_id}-{label}"
-    cv2.putText(
-        image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, thickness
-    )
-    return image
-
-def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path = None, web_link=None, max_fps=12):
-    global global_image_sequence_counter
+def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path = None, video=True, max_fps=12, stop_event=None,cam_index=1):
+    
+    
+    global_image_sequence_counter=0
 
     if destination_folder is None:
         destination_folder = Path("../data")
@@ -100,7 +76,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
     desired_frame_time = 1.0 / max_fps if max_fps > 0 else 0
 
 
-    while True:
+    while not stop_event.is_set():
         frame_start_time = time.time() # 프레임 처리 시작 시간 기록
 
         ret, frame = cap.read()
@@ -121,7 +97,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
 
         annotated_frame = frame.copy() # 원본 프레임 복사
 
-        cv2.imshow(f"Camera {cam_num}", annotated_frame)
+        # cv2.imshow(f"Camera {cam_num}", annotated_frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
@@ -169,7 +145,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
                             # -----------------------------------
 
                             tracked_images_folder = os.path.join(
-                                sub_data_folder_path, f"person_track{track_id:04d}"
+                                sub_data_folder_path, f"camera_{cam_index}"
                             )
                             make_folder(tracked_images_folder)
 
@@ -197,7 +173,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
                         
 
                         try:
-                            print("Adding person detection data to queue.  ")
+                            # print("Adding person detection data to queue.  ")
                             person_data_queue_instance.put(person_detection_data, block=False)
                         except queue.Full:
                             print(f"Person data queue full, skipping data for person ID {track_id} at {timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}")
