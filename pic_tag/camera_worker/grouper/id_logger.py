@@ -15,7 +15,7 @@ class IdentityLogger:
                     person_id INTEGER NOT NULL,
                     embedding TEXT NOT NULL,
                     file_path TEXT,
-                    camera_id INTEGER,
+                    camera_id TEXT,
                     bb_x1 INTEGER,
                     bb_y1 INTEGER,
                     bb_x2 INTEGER,

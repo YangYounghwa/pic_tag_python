@@ -7,7 +7,7 @@ import threading
 from .cropper import capture_frames
 from .cropper import capture_video_frames
 from .feature_extrator import extract_features
-from .grouper import IdentityEnginev2
+from .grouper import IdentityEngine
 import queue as Queue
 from .grouper.id_logger import IdentityLogger
 import configparser
@@ -73,7 +73,7 @@ def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: 
     threads.append(feature_extractor_thread)
     
     
-    engine = IdentityEnginev2(feature_queue, sim_threshold=0.80,logger=logger, max_history=2000, max_age_sec=86400)
+    engine = IdentityEngine(feature_queue, sim_threshold=0.80,logger=logger, max_history=2000, max_age_sec=86400)
     grouper_thread = threading.Thread(target=engine.run,args=(stop_event,)) # Assuming camera_id 0 for the grouper
     grouper_thread.start()
     threads.append(grouper_thread)
