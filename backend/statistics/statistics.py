@@ -231,6 +231,77 @@ class StatisticsFromDB:
             print(f"Statistics saved to {output_path}")
         except Exception as e:
             print(f"Error saving to CSV: {e}")
+    
+    # 현재 체류 중인 방문자 수를 계산하는 메소드
+    def calculate_current_visitors(self, statistics):
+        """Calculate the number of visitors present at the latest timestamp in the data."""
+        if not self.validate_statistics(statistics):
+            return 0
+        if not statistics:
+            return 0
+        # 데이터 내 가장 마지막 timestamp 찾기
+        latest_time = max(datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S") for row in statistics)
+        one_minute_ago = latest_time - timedelta(minutes=1)
+        current_visitors = {
+            row[2]
+            for row in statistics
+            if one_minute_ago < datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S") <= latest_time
+        }
+        return len(current_visitors)
+    
+    # 최근 5명의 방문자 아이디를 반환하는 메소드
+    def get_recent_visitors(self, statistics, limit=5):
+        """Get the most recent visitor IDs based on the latest timestamps."""
+        if not self.validate_statistics(statistics):
+            return []
+        if not statistics:
+            return []
+        
+        # 데이터 내 가장 최근 timestamp 찾기
+        latest_time = max(datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S") for row in statistics)
+        one_minute_ago = latest_time - timedelta(minutes=1)
+        
+        # 1분 이내에 기록된 person_id 집합
+        recent_visitors = {
+            row[2]
+            for row in statistics
+            if one_minute_ago < datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S") <= latest_time
+        }
+        
+        # 최근 방문자 아이디를 리스트로 변환하고 정렬
+        return sorted(recent_visitors, reverse=True)[:limit]
+    
+    # database에서 선택한 방문자 아이디의 정보를 반환하는 메소드
+    def get_visitor_info(self, person_id):
+        """Get information for a specific visitor by person_id."""
+        try:
+            cursor = self.db_connection.cursor()
+            cursor.execute(
+                "SELECT * FROM identity_log WHERE person_id = ?",
+                (person_id,)
+            )
+            rows = cursor.fetchall()
+            cursor.close()
+            return rows
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+            return []
+    
+    # 선택한 방문자 아이디의 저장된 이미지 주소를 반환하는 메소드
+    def get_visitor_images(self, person_id):
+        """Get file paths of images for a specific visitor by person_id."""
+        try:
+            cursor = self.db_connection.cursor()
+            cursor.execute(
+                "SELECT file_path FROM identity_log WHERE person_id = ?",
+                (person_id,)
+            )
+            rows = cursor.fetchall()
+            cursor.close()
+            return [row[0] for row in rows]
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+            return []
 
     def close_connection(self):
         """Close the database connection."""
@@ -280,9 +351,23 @@ def test_statistics_from_db(db_path=None):
     # CSV로 저장
     stats.save_statistics_to_csv(output_path, rows)
     
+
+    # 추가된 기능들에 대한 테스트
+    recent_visitors = stats.get_recent_visitors(rows, limit=5)
+    assert len(recent_visitors) <= 5, f"Expected at most 5 recent visitors, but got {len(recent_visitors)}"
+
+    visitor_info = stats.get_visitor_info(1)  # person_id 1에 대한 정보 조회
+    assert len(visitor_info) > 0, "Expected to find information for person_id 0"
+    print(f"Visitor info for person_id 1: {visitor_info}")
+
+    visitor_images = stats.get_visitor_images(1)  # person_id 1에 대한 이미지 경로 조회
+    assert len(visitor_images) > 0, "Expected to find images for person_id 0"
+    print(f"Visitor images for person_id 1: {visitor_images}")
+
     print(f"All tests passed! Database: {db_path}, CSV: {output_path}")
     stats.close_connection()
 
+    
 if __name__ == "__main__":
     test_statistics_from_db()
 
