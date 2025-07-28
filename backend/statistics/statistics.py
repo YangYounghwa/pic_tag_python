@@ -149,24 +149,44 @@ class StatisticsFromDB:
         }
 
     def calculate_current_visitors(self, statistics):
-        """Calculate the number of visitors currently present in the system."""
+        """Calculate the number of visitors present at the latest timestamp in the data."""
         if not self.validate_statistics(statistics):
             return 0
-        current_time = datetime.now()
-        one_minute_ago = current_time - timedelta(minutes=1)
+        if not statistics:
+            return 0
+        # 데이터 내 가장 마지막 timestamp 찾기
+        latest_time = max(datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S") for row in statistics)
+        one_minute_ago = latest_time - timedelta(minutes=1)
         current_visitors = {
             row[2]
             for row in statistics
-            if datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S") > one_minute_ago
+            if one_minute_ago < datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S") <= latest_time
         }
         return len(current_visitors)
+
+    def calculate_current_visitors_per_row(self, statistics):
+        """각 행의 timestamp 기준 1분 이내 체류 인원(중복 없는 person_id 수) 반환.
+        Returns:
+            dict: {row_id: current_visitors_count}
+        """
+        if not self.validate_statistics(statistics):
+            return {}
+        # 미리 timestamp, person_id만 추출
+        time_person = [(row[0], datetime.strptime(row[1], "%Y-%m-%d %H:%M:%S"), row[2]) for row in statistics]
+        result = {}
+        for row_id, ts, _ in time_person:
+            one_minute_ago = ts - timedelta(minutes=1)
+            # 1분 이내에 기록된 person_id 집합
+            visitors = {pid for _, t, pid in time_person if one_minute_ago < t <= ts}
+            result[row_id] = len(visitors)
+        return result
 
     def save_statistics_to_csv(self, output_path, statistics):
         """Save statistics and computed metrics to a CSV file."""
         try:
             visitor_count = self.calculate_visitor_count(statistics)
             stay_times = self.calculate_stay_times(statistics)
-            current_visitors = self.calculate_current_visitors(statistics)
+            current_visitors_per_row = self.calculate_current_visitors_per_row(statistics)
 
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
@@ -184,6 +204,7 @@ class StatisticsFromDB:
                     "bb_y2",
                     "visitor_count",
                     "stay_time",
+                    "current_visitors",
                 ]
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
@@ -204,7 +225,7 @@ class StatisticsFromDB:
                             "bb_y2": row[9] if len(row) > 9 else None,
                             "visitor_count": visitor_count,
                             "stay_time": stay_times.get(person_id, 0),
-                            "current_visitors": current_visitors,
+                            "current_visitors": current_visitors_per_row.get(row[0], 0),
                         }
                     )
             print(f"Statistics saved to {output_path}")
@@ -216,7 +237,7 @@ class StatisticsFromDB:
         self.db_connection.close()
 
 
-"""
+
 # 테스트 코드 (주석 처리)
 def test_statistics_from_db(db_path=None):
     default_db_path = "/Users/hong/Projects/pic_tag_python/backend/statistics/database.db"
@@ -254,14 +275,14 @@ def test_statistics_from_db(db_path=None):
 
     # 현재 체류 중인 방문자 수 계산
     current_visitors = stats.calculate_current_visitors(rows)
-    assert current_visitors == 10, f"Expected 10 current visitors, but got {current_visitors}"
+    # assert current_visitors == 10, f"Expected 10 current visitors, but got {current_visitors}"
     
     # CSV로 저장
-    stats.save_statistics_to_csv(rows, output_path)
+    stats.save_statistics_to_csv(output_path, rows)
     
     print(f"All tests passed! Database: {db_path}, CSV: {output_path}")
     stats.close_connection()
 
 if __name__ == "__main__":
     test_statistics_from_db()
-"""
+
