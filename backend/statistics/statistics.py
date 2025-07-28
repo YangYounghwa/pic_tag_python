@@ -13,6 +13,22 @@ class StatisticsFromDB:
         self.db_connection = sqlite3.connect(db_path)
         self.db_connection.row_factory = sqlite3.Row
         self._create_table()
+                # 이상치 필터 기준 설정 (예시)
+        self.min_stay_seconds = 10      # 10초 미만 체류는 이상치
+        self.max_stay_seconds = 60*60*8 # 8시간 초과 체류는 이상치
+
+    def filter_outliers(self, statistics):
+        """이상치(예: 너무 짧거나 긴 체류, 잘못된 bounding box 등) row를 제외."""
+        filtered = []
+        for row in statistics:
+            # 예시: bounding box 좌표가 음수이거나, 너무 크면 제외
+            if any(coord is not None and (coord < 0 or coord > 10000) for coord in row[6:10]):
+                continue
+            # 예시: person_id, timestamp, file_path 등 결측값 제외
+            if row[2] is None or not row[1] or not row[4]:
+                continue
+            filtered.append(row)
+        return filtered
 
     # 테스트를 위해 데이터 베이스 생성하는 코드, 추후 주석 처리 혹은 삭제 예정
     def _create_table(self):
@@ -263,7 +279,7 @@ class StatisticsFromDB:
     해당 id가 최근 24시간동안 보인 시간대 표시, 단 3분 주기로 기록, 3분보다 가까운 값들은 삭제
     반환값 : list [ timestamp, cam_num , boundingbox, file_path ]
     """
-
+        
     def get_recent_people(self, minute, statistics, timestamp=None):
         """Get the number of unique visitors in the last 'minute' minutes."""  
         if not self.validate_statistics(statistics):
@@ -398,6 +414,7 @@ def test_statistics_from_db(db_path=None):
     
     # 통계 조회
     rows = stats.get_statistics()
+    rows = stats.filter_outliers(rows)  # 이상치 제거
     assert len(rows) == 100, f"Expected 100 rows, but got {len(rows)}"
     
     # 데이터 유효성 검사
