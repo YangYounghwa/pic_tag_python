@@ -49,16 +49,18 @@ def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: 
         folder = base_dir / "data"
     folder.mkdir(parents=True, exist_ok=True)
     log_db_path = folder / "db" / "identity_log.db"
+    
+    if not live:
+        log_db_path = folder / "db" / "video_identity_log.db"
     log_db_path.parent.mkdir(parents=True, exist_ok=True) 
-
 
     config = configparser.ConfigParser()
     config_path = os.path.join(os.path.dirname(__file__), "pw", "camera_config.ini")
     config.read(config_path)
     camera_names = config.sections()
     
-    
     logger = IdentityLogger(log_db_path)
+    
     frame_queue = Queue.Queue(maxsize=250)
     feature_queue = Queue.Queue(maxsize=250)
 
@@ -72,7 +74,7 @@ def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: 
     feature_extractor_thread.start()
     threads.append(feature_extractor_thread)
     
-    
+
     engine = IdentityEngine(feature_queue, sim_threshold=0.80,logger=logger, max_history=2000, max_age_sec=86400)
     grouper_thread = threading.Thread(target=engine.run,args=(stop_event,)) # Assuming camera_id 0 for the grouper
     grouper_thread.start()
