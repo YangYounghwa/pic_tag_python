@@ -12,6 +12,8 @@ __pycache__/
 detected_images/
 *.pt
 
+# 테스트용 csv 파일 제외
+*.csv 
 
 # 보안 파일들
 *.pem
