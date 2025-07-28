@@ -8,7 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 class IdentityEngine(threading.Thread):
     def __init__(self, shared_queue: Queue, logger=None,
-                 sim_threshold=0.2, max_history=20000, max_age_sec=86400):
+                 sim_threshold=0.7, max_history=20000, max_age_sec=86400):
         super().__init__()
         self.queue = shared_queue
         self.logger = logger
@@ -16,13 +16,12 @@ class IdentityEngine(threading.Thread):
         self.max_age_sec = max_age_sec
         self.person_counter = 0
         self.lock = threading.Lock()
-        self.running = True
 
         # New structure: person_id → list of (timestamp, embedding)
         self.identity_db = defaultdict(list)
 
-    def run(self):
-        while self.running:
+    def run(self, stop_event=None):
+        while not stop_event.is_set():
             try:
                 feature_data = self.queue.get()
                 if not feature_data:
@@ -66,8 +65,6 @@ class IdentityEngine(threading.Thread):
                 time.sleep(0.1)
                 continue
 
-    def stop(self):
-        self.running = False
 
     def _assign_identity(self, timestamp, embedding: np.ndarray, bounding_box, file_path, camera_id=None):
         embedding = embedding.astype(np.float32)

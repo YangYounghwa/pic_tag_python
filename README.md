@@ -23,6 +23,18 @@ cd backend
 daphne -b 0.0.0.0 -p 8080 backend.asgi:application
 ```
 
+##
+```
+cd pic_tag
+python main.py live
+```
+
+
+```
+cd pic_tag
+python main.py video 2 path_to_video1 path_to_video2
+```
+
 
 
 
