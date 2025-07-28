@@ -5,7 +5,8 @@ from queue import Queue, Empty
 from collections import defaultdict, deque
 from sklearn.metrics.pairwise import cosine_similarity
 
-class IdentityEnginev2(threading.Thread):
+
+class IdentityEngine(threading.Thread):
     def __init__(self, shared_queue: Queue, logger=None,
                  sim_threshold=0.7, max_history=20000, max_age_sec=86400, max_embeddings_per_id=100):
         super().__init__()
