@@ -4,6 +4,7 @@ run_live.bat
 run_video.bat
 *.mp4
 */video_check/
+*.zip
 
 data/db/*
 data/images/*
