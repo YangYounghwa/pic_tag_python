@@ -72,6 +72,9 @@ TEMPLATES = [
 
 ASGI_APPLICATION = "backend.asgi.application"
 
+
+STATIC_ROOT = BASE_DIR / "staticfiles"  # folder used by collectstatic
+
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [ BASE_DIR / "monitoring" / "static"]

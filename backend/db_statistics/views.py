@@ -16,9 +16,14 @@ class PageSyncAPIView(APIView):
         folder.mkdir(parents=True, exist_ok=True)
         log_db_path = folder / "db" / "identity_log.db"
         result = get_page_sync(log_db_path)
+        
+        # current_on_CCTV 
+        # last_24_people 
+        # current_people
         result = {
-            "one" : "one",
-            "two" : "two"
+            "current_on_CCTV"  : 2,
+            "last_24_people " : 59,
+            "current_people" : 23,
         }
         
         return Response(result, status=status.HTTP_200_OK)
