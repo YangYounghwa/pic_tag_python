@@ -9,7 +9,7 @@ class IdentityEngine(threading.Thread):
     def __init__(self, shared_queue: Queue, logger=None,
                  sim_threshold=0.7, max_age_sec=86400,
                  max_prototypes=3, spatial_bias=0.10,
-                 spatial_window_size=50, spatial_distance_thresh=20,max_history=20000):
+                 spatial_window_size=10, spatial_distance_thresh=20,max_history=20000):
         super().__init__()
         self.queue = shared_queue
         self.logger = logger
@@ -26,12 +26,17 @@ class IdentityEngine(threading.Thread):
         # Core structures
         self.embedding_history = defaultdict(deque)       # pid → deque[(timestamp, embedding)]
         self.prototype_db = defaultdict(list)             # pid → [embedding1, embedding2, ...]
+
+        # Each camera has separate windows.
         self.recent_detections = defaultdict(deque)       # camera_id → deque[(timestamp, pid, bbox)]
 
         self.daemon = True
 
     def run(self, stop_event=None):
         stop_event = stop_event or threading.Event()
+
+
+        # Get data from shared Queue.
         while not stop_event.is_set():
             try:
                 feature_data = self.queue.get(timeout=0.5)
@@ -77,11 +82,13 @@ class IdentityEngine(threading.Thread):
 
             best_pid, best_sim = None, -1
 
+            # Compare with all prototypes.
             for pid, prototypes in self.prototype_db.items():
                 sims = [np.dot(embedding, proto) for proto in prototypes]
                 max_sim = max(sims)
 
                 # Add spatial bias if seen recently from same camera
+                # Effective check count  ~~ spatial_window_size / # of people from a frame
                 for ts_recent, seen_pid, seen_bbox in self.recent_detections[camera_id]:
                     if seen_pid == pid and self._bbox_distance(bbox, seen_bbox) < self.spatial_distance_thresh*self.spatial_distance_thresh:
                         max_sim += self.spatial_bias
@@ -90,7 +97,8 @@ class IdentityEngine(threading.Thread):
                 if max_sim > best_sim:
                     best_sim = max_sim
                     best_pid = pid
-
+            # Around 0.7 ? would be good for threshold. In Ideal case such as training ReID set, It would be 0.5 where the whole body is shown.
+            # With same obstacles such as desks features tend to be similar.
             if best_sim >= self.sim_threshold:
                 self._update_identity(best_pid, timestamp, embedding, bbox, camera_id)
                 if self.logger:
@@ -104,6 +112,7 @@ class IdentityEngine(threading.Thread):
         self._trim_history(pid)
 
         # Update prototypes using EMA
+        # Exponential Moving Average
         prototypes = self.prototype_db[pid]
         sims = [np.dot(embedding, p) for p in prototypes]
 
@@ -112,7 +121,8 @@ class IdentityEngine(threading.Thread):
 
         if max_sim >= self.sim_threshold:
             # Exponential moving average update
-            ema_decay = 0.8
+            # Decay should be slow, fading away might cause trouble. All people fading away looks similar.
+            ema_decay = 0.95
             updated = ema_decay * prototypes[best_idx] + (1 - ema_decay) * embedding
             prototypes[best_idx] = updated / np.linalg.norm(updated)
         else:
@@ -120,7 +130,7 @@ class IdentityEngine(threading.Thread):
                 prototypes.append(embedding)
             else:
                 # Replace only if it's meaningfully different
-                replace_thresh = self.sim_threshold - 0.1  # adjustable margin
+                replace_thresh = self.sim_threshold - 0.075  # adjustable margin
                 min_sim = min(sims)
                 min_idx = int(np.argmin(sims))
                 if min_sim < replace_thresh:

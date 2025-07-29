@@ -153,7 +153,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
                             image_filepath = os.path.join(tracked_images_folder, pic_name)
 
                             try:
-                                cv2.imwrite(image_filepath, object_crop, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+                                cv2.imwrite(image_filepath, object_crop, [int(cv2.IMWRITE_JPEG_QUALITY), 50])
                                 # cv2.imwrite(image_filepath, object_crop) # 파일 저장은 BGR로 해도 무방
                                 # print(f"Saved: {image_filepath}")
                             except Exception as e:
