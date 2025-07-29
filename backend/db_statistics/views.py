@@ -15,6 +15,10 @@ class PageSyncAPIView(APIView):
         folder.mkdir(parents=True, exist_ok=True)
         log_db_path = folder / "db" / "identity_log.db"
         result = get_page_sync(log_db_path)
+        result = {
+            "one" : "one",
+            "two" : "two"
+        }
         
         return Response(result, status=status.HTTP_200_OK)
     
@@ -26,5 +30,9 @@ class PersonDetailAPIView(APIView):
         folder.mkdir(parents=True, exist_ok=True)
         log_db_path = folder / "db" / "identity_log.db"
         result = get_info_by_id(log_db_path)
-        
+        result = {
+            "one" : "one",
+            "two" : "two"
+        }
+         
         return Response(result, status=status.HTTP_200_OK) 
