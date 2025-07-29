@@ -19,7 +19,7 @@ class IdentityEngine(threading.Thread):
         self.spatial_bias = spatial_bias
         self.spatial_window_size = spatial_window_size
         self.spatial_distance_thresh = spatial_distance_thresh
-
+        self.max_history = max_history
         self.person_counter = 0
         self.lock = threading.Lock()
 
