@@ -8,8 +8,8 @@ import time
 class IdentityEngine(threading.Thread):
     def __init__(self, shared_queue: Queue, logger=None,
                  sim_threshold=0.7, max_age_sec=86400,
-                 max_prototypes=3, spatial_bias=0.10,
-                 spatial_window_size=50, spatial_distance_thresh=50,max_history=20000):
+                 max_prototypes=2, spatial_bias=0.10,
+                 spatial_window_size=50, spatial_distance_thresh=20,max_history=20000):
         super().__init__()
         self.queue = shared_queue
         self.logger = logger
@@ -19,7 +19,7 @@ class IdentityEngine(threading.Thread):
         self.spatial_bias = spatial_bias
         self.spatial_window_size = spatial_window_size
         self.spatial_distance_thresh = spatial_distance_thresh
-
+        self.max_history = max_history
         self.person_counter = 0
         self.lock = threading.Lock()
 
@@ -83,7 +83,7 @@ class IdentityEngine(threading.Thread):
 
                 # Add spatial bias if seen recently from same camera
                 for ts_recent, seen_pid, seen_bbox in self.recent_detections[camera_id]:
-                    if seen_pid == pid and self._bbox_distance(bbox, seen_bbox) < self.spatial_distance_thresh:
+                    if seen_pid == pid and self._bbox_distance(bbox, seen_bbox) < self.spatial_distance_thresh*self.spatial_distance_thresh:
                         max_sim += self.spatial_bias
                         break  # one bonus is enough
 
@@ -154,10 +154,10 @@ class IdentityEngine(threading.Thread):
                     q = deque([(ts, p, b) for ts, p, b in q if p != pid])
 
     def _bbox_distance(self, b1, b2):
-        c1 = ((b1[0] + b1[2]) / 2, (b1[1] + b1[3]) / 2)
-        c2 = ((b2[0] + b2[2]) / 2, (b2[1] + b2[3]) / 2)
-        return np.linalg.norm(np.array(c1) - np.array(c2))
-
+        cx1, cy1 = (b1[0]+b1[2])/2, (b1[1]+b1[3])/2
+        cx2, cy2 = (b2[0]+b2[2])/2, (b2[1]+b2[3])/2
+        dx, dy = cx1 - cx2, cy1 - cy2
+        return dx*dx + dy*dy  # avoid sqrt if you just compare distance
     def get_active_identity_count(self):
         with self.lock:
             return len(self.prototype_db)
