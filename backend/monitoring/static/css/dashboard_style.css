@@ -724,3 +724,20 @@ body {
 .hidden {
     display: none;
 }
+
+.video-section {
+    display: flex;
+    gap: 24px;
+}
+
+.video-list {
+    flex: 1;
+}
+
+.video-player-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
