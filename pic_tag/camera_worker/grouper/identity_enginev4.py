@@ -103,22 +103,29 @@ class IdentityEngine(threading.Thread):
         self.embedding_history[pid].append((timestamp, embedding))
         self._trim_history(pid)
 
-        # Keep prototypes updated
+        # Update prototypes using EMA
         prototypes = self.prototype_db[pid]
         sims = [np.dot(embedding, p) for p in prototypes]
 
-        if max(sims) < self.sim_threshold:
+        max_sim = max(sims)
+        best_idx = int(np.argmax(sims))
+
+        if max_sim >= self.sim_threshold:
+            # Exponential moving average update
+            ema_decay = 0.8
+            updated = ema_decay * prototypes[best_idx] + (1 - ema_decay) * embedding
+            prototypes[best_idx] = updated / np.linalg.norm(updated)
+        else:
             if len(prototypes) < self.max_prototypes:
                 prototypes.append(embedding)
             else:
+                # Replace only if it's meaningfully different
+                replace_thresh = self.sim_threshold - 0.1  # adjustable margin
+                min_sim = min(sims)
                 min_idx = int(np.argmin(sims))
-                prototypes[min_idx] = embedding
-        else:
-            best_idx = int(np.argmax(sims))
-            updated = (prototypes[best_idx] + embedding) / 2
-            prototypes[best_idx] = updated / np.linalg.norm(updated)
+                if min_sim < replace_thresh:
+                    prototypes[min_idx] = embedding
 
-        # Track spatial detection history
         self._update_recent_detections(camera_id, timestamp, pid, bbox)
 
     def _create_new_identity(self, embedding, timestamp, bbox, file_path, camera_id):
