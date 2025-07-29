@@ -264,7 +264,7 @@ function simulatePlayback() {
 
 // 모든 업데이트 함수들을 정기적으로 실행
 setInterval(updateTime, 1000);          // 1초마다 시간 업데이트
-setInterval(updateStats, 10000);        // 10초마다 통계 업데이트
+
 setInterval(addNewLogEntry, 15000);     // 15초마다 새 로그 확인
 setInterval(updateDetectionLog, 8000);  // 8초마다 감지 로그 업데이트
 setInterval(simulatePlayback, 2000);    // 2초마다 재생 시뮬레이션
@@ -903,7 +903,7 @@ function playVideo(file) {
 // fetch stat data every 1 second.
 async function fetchStatsAndUpdate() {
     try {
-        const response = await fetch('/api/get_page_sync');
+        const response = await fetch('/sync/page/');
         if (!response.ok) throw new Error("API error");
 
         const data = await response.json();
