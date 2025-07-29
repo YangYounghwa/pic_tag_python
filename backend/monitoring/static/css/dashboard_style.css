@@ -732,6 +732,11 @@ body {
 
 .video-list {
     flex: 1;
+    max-height: 400px;      /* 원하는 높이로 조절 */
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
 }
 
 .video-player-area {
@@ -740,4 +745,34 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
+}
+
+.video-player-area video#videoPlayer {
+    width: 640px;
+    height: 400px;
+    max-width: 100%;
+    max-height: 500px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: none;
+}
+
+.video-list .video-item {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 8px 12px;
+    display: flex;
+    align-items: flex-start;   /* 세로 위쪽에 맞춤 */
+    gap: 4px;                  /* 썸네일과 제목 사이 간격 최소화 */
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+}
+
+.video-list .video-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #222;
+    margin: 0;                 /* 제목 위아래 여백 제거 */
+    line-height: 48px;         /* 썸네일 높이에 맞춰 세로 가운데 정렬 효과 */
 }
