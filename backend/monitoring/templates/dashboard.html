@@ -58,7 +58,10 @@
                 <div class="menu-item active" onclick="showSection('monitoring')">실시간 영상감지</div>
                 <div class="menu-item" onclick="showSection('detection')">탐색</div>
                 <div class="menu-item" onclick="showSection('statistics')">통계 분석</div>
+                <div class="menu-item" onclick="showSection('videoPlayback')">동영상 재생</div>
                 <div class="menu-item" onclick="showSection('settings')">시스템 설정</div>
+
+                
             </nav>
 
             <main class="content-area">
@@ -258,6 +261,32 @@
                         <h2 class="section-title">인원 추적 현황</h2>
                         <div class="tracking-grid" id="trackingGrid">
                             <!-- 동적으로 생성될 인원 카드들 -->
+                        </div>
+                    </div>
+                </div>
+                <!--동영상재생 -->
+                <div id="videoPlayback" class="section hidden">
+                    <h1 class="page-title">동영상 재생</h1>
+                    <!-- 검색창-->
+                    <div class="video-search-bar" style="margin-bottom: 20px;">
+                        <input type="text" id="videoSearchInput" placeholder="동영상 제목 또는 날짜로 검색하세요...">
+                        <button id="videoSearchButton" onclick="searchVideos()">검색</button>
+                    </div>
+
+                    <div class="video-section" style="display: flex; gap: 32px;">
+                        <!-- 영상 목록 카드 그리드 -->
+                        <div class="video-list" id="videoList" style="flex: 1; display: grid; grid-template-columns: 1fr; gap: 16px;">
+                            <!-- 동적으로 생성될 동영상 목록 -->
+                        </div>
+                        <!-- 영상 플레이어 카드 -->
+                        <div class="video-player-area" style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div class="stat-card" style="width: 100%; max-width: 500px; min-height: 340px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                <video id="videoPlayer" width="480" height="320" controls style="display:none; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                    <source id="videoSource" src="" type="video/mp4">
+                                    브라우저가 video 태그를 지원하지 않습니다.
+                                </video>
+                                <div id="videoPlaceholder" style="padding:20px;text-align:center;">동영상을 선택하세요.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
