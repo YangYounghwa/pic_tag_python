@@ -873,3 +873,74 @@ window.addEventListener('DOMContentLoaded', () => {
 //     };
 // }
 
+// 예시: 전체 동영상 목록 (실제 데이터는 서버에서 받아올 수도 있음)
+const allVideos = [
+    {
+        file: 'video1.mp4',
+        thumbnail: '/static/images/video1_thumbnail.jpg',
+        title: '현관 입구 - 2023-10-01'
+    },
+    {
+        file: 'video2.mp4',
+        thumbnail: '/static/images/video2_thumbnail.jpg',
+        title: '주차장 - 2023-10-01'
+    },
+    {
+        file: 'video3.mp4',
+        thumbnail: '/static/images/video3_thumbnail.jpg',
+        title: '복도 - 2023-10-01'
+    },
+    {
+        file: 'video4.mp4',
+        thumbnail: '/static/images/video4_thumbnail.jpg',
+        title: '복도 - 2023-10-01'
+    }
+];
+
+// 동영상 목록 렌더링 함수
+function renderVideoList(videos) {
+    const videoList = document.getElementById('videoList');
+    videoList.innerHTML = '';
+    if (videos.length === 0) {
+        videoList.innerHTML = '<div style="padding:20px;text-align:center;">검색 결과가 없습니다.</div>';
+        return;
+    }
+    videos.forEach(video => {
+        const item = document.createElement('div');
+        item.className = 'video-item';
+        item.onclick = () => playVideo(video.file);
+        item.innerHTML = `
+            <div class="video-thumbnail" style="background-image: url('${video.thumbnail}');"></div>
+            <div class="video-title">${video.title}</div>
+        `;
+        videoList.appendChild(item);
+    });
+}
+
+// 검색 함수
+function searchVideos() {
+    const keyword = document.getElementById('videoSearchInput').value.trim();
+    const filtered = allVideos.filter(v =>
+        v.title.includes(keyword) || v.title.replace(/-/g, '').includes(keyword)
+    );
+    renderVideoList(filtered);
+}
+
+// 페이지 진입 시 전체 목록 표시
+document.addEventListener('DOMContentLoaded', function() {
+    renderVideoList(allVideos);
+});
+
+function playVideo(file) {
+    const videoPlayer = document.getElementById('videoPlayer');
+    const videoSource = document.getElementById('videoSource');
+    const placeholder = document.getElementById('videoPlaceholder');
+    if (!videoPlayer || !videoSource) return;
+
+    // 파일 경로 지정 (실제 환경에 맞게 경로 수정)
+    videoSource.src = '/static/videos/' + file;
+    videoPlayer.load();
+    videoPlayer.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+}
+
