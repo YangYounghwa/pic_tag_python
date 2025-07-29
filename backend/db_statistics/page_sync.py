@@ -4,11 +4,23 @@ from backend.db_statistics.db_statistics import StatisticsCalculator
 from backend.db_statistics.db_postprocess import StatisticsPostprocessor
 from backend.db_statistics.db_test_utils import generate_dummy_rows
 
-def main():
+def get_page_sync(db_path_arg):
+    """_summary_
+    한페이지 전체 조회를 하였을 때에
+
+    페이지 전체에 내보내는 통계 값들을 dictionary 형태로 내보냅니다.
+
+     
+    Args:
+        db_path_arg (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     # 1. DB 연결 및 테이블 준비
-    db_path = "backend/statistics/database.db"
+    db_path = db_path_arg
     db = DatabaseManager(db_path)
-    db.clear_table()
+    # db.clear_table()
 
     # 2. 더미 데이터 생성 및 삽입
     dummy_rows = generate_dummy_rows(100)
@@ -39,6 +51,11 @@ def main():
 
     # 8. DB 연결 종료
     db.close()
-
-if __name__ == "__main__":
-    main()
+    
+    ### RETURN MUST BE IN FORM OF DICTIONARY
+    
+     
+    return { 
+            "unique_visitor": visitor_count,
+            
+            }
