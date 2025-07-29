@@ -117,28 +117,6 @@ function seekVideo(event) {
     marker.style.left = percentage + '%';
 }
 
-// 크롭 이미지 선택
-function selectCrop(element, timestamp) {
-    // 기존 선택 해제
-    const crops = document.querySelectorAll('.crop-item');
-    crops.forEach(crop => crop.classList.remove('selected'));
-
-    // 현재 항목 선택
-    element.classList.add('selected');
-
-    // 타임라인에 마커 표시
-    const marker = document.querySelector('.timeline-marker');
-    if (marker) {
-        // 시간에 따른 위치 계산 (예시)
-        const timeValue = parseInt(timestamp.split(':')[2]);
-        const position = (timeValue / 60) * 100; // 분 단위로 계산
-        marker.style.left = Math.min(position, 90) + '%';
-    }
-
-    // 로그에 해당 시간 강조
-    highlightLogEntry(timestamp);
-}
-
 // 로그 엔트리 강조
 function highlightLogEntry(timestamp) {
     const logEntries = document.querySelectorAll('.log-entry');
@@ -201,31 +179,7 @@ function updateTime() {
     }
 }
 
-// 통계 데이터 업데이트
-function updateStats() {
-    const statValues = document.querySelectorAll('.stat-value');
-    if (statValues.length >= 4) {
-        // 실시간으로 변하는 데이터 시뮬레이션
-        const currentEntry = parseInt(statValues[0].textContent) || 142;
-        const currentExit = parseInt(statValues[1].textContent) || 98;
 
-        // 간헐적으로 입장자 증가
-        if (Math.random() < 0.1) {
-            statValues[0].textContent = currentEntry + 1;
-            statValues[2].textContent = (currentEntry + 1) - currentExit; // 현재 체류 인원
-        }
-
-        // 간헐적으로 퇴장자 증가
-        if (Math.random() < 0.08) {
-            statValues[1].textContent = currentExit + 1;
-            statValues[2].textContent = currentEntry - (currentExit + 1); // 현재 체류 인원
-        }
-
-        // 평균 체류시간 변동
-        const avgTimes = ['23분', '25분', '27분', '24분', '26분'];
-        statValues[3].textContent = avgTimes[Math.floor(Math.random() * avgTimes.length)];
-    }
-}
 
 // 새로운 로그 엔트리 추가
 function addNewLogEntry() {
@@ -942,5 +896,130 @@ function playVideo(file) {
     videoPlayer.load();
     videoPlayer.style.display = 'block';
     if (placeholder) placeholder.style.display = 'none';
+}
+
+
+
+// fetch stat data every 1 second.
+async function fetchStatsAndUpdate() {
+    try {
+        const response = await fetch('/api/get_page_sync');
+        if (!response.ok) throw new Error("API error");
+
+        const data = await response.json();
+
+        // --- Numerical stats ---
+        const currentOnCCTV = data.current_on_CCTV || 0;
+        const last24People = data.last_24_people || 0;
+        const stayCount = data.current_people?.stay_count || 0;
+        const goneCount = data.current_people?.gone_count || 0;
+
+        const currentTotal = stayCount + goneCount;
+        const percentage = currentTotal > 0 ? ((currentOnCCTV / currentTotal) * 100).toFixed(1) + "%" : "0%";
+
+        const elLast24 = document.getElementById('last_24_hrs_people');
+        const elStay = document.getElementById('people_stay_count');
+        const elGone = document.getElementById('people_gone_count');
+        const elCurrentPct = document.getElementById('current_people_on_camera');
+
+        if (elLast24) elLast24.textContent = last24People;
+        if (elStay) elStay.textContent = stayCount;
+        if (elGone) elGone.textContent = goneCount;
+        if (elCurrentPct) elCurrentPct.textContent = percentage;
+
+        // --- Recent 5 person list ---
+        const cropGrid = document.querySelector('.crop-grid');
+        if (cropGrid) {
+            cropGrid.innerHTML = ''; // Clear previous list
+
+            const recentList = data.recent_5_list || [];
+            recentList.forEach(personIdRaw => {
+                const personId = parseInt(personIdRaw);
+                if (isNaN(personId)) return;
+
+                const cropItem = document.createElement('div');
+                cropItem.className = 'crop-item';
+                cropItem.textContent = `Person ${personId}`;
+                cropItem.dataset.personId = personId;
+                cropItem.onclick = () => selectCrop(cropItem, personId);
+
+                cropGrid.appendChild(cropItem);
+            });
+        }
+
+    } catch (error) {
+        console.error("❌ Failed to fetch stats:", error);
+    }
+}
+// Initial call
+fetchStatsAndUpdate();
+setInterval(fetchStatsAndUpdate, 10000);
+
+
+
+
+//Select crop will change logs on the right.
+function selectCrop(elem, personId) {
+    fetch(`/sync/get_by_id/${personId}/`)
+        .then(response => {
+            if (!response.ok) throw new Error("Failed to fetch person detail");
+            return response.json();
+        })
+        .then(data => {
+            const logContainer = document.querySelector('.detection-log');
+
+            // Clear old logs except the title
+            logContainer.innerHTML = '<h3 style="margin-bottom: 15px;">감지 로그</h3>';
+
+            const actions = data.recent_actions || [];
+
+            actions.forEach(entry => {
+                const time = entry.timestamp || '';
+                const cam = camNumberToLabel(entry.cam_num);
+                const bbox = entry.bounding_box || [];
+
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'log-time';
+                timeDiv.textContent = formatTime(time);
+
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'log-action';
+                actionDiv.textContent = `인원 감지 - ${cam}`;
+
+                logEntry.appendChild(timeDiv);
+                logEntry.appendChild(actionDiv);
+
+                logContainer.appendChild(logEntry);
+            });
+        })
+        .catch(error => {
+            console.error("Error in selectCrop:", error);
+        });
+}
+
+
+
+function formatTime(timestamp) {
+    try {
+        const date = new Date(timestamp);
+        return date.toTimeString().slice(0, 8);
+    } catch (e) {
+        return timestamp;
+    }
+}
+
+// Translate camera number to description (customize these as needed)
+function camNumberToLabel(camNum) {
+    switch (camNum) {
+        case 1: return '현관 입구 진입';
+        case 2: return '현관 입구 대기';
+        case 3: return '현관 입구 접근';
+        case 4: return '주차장에서 이동';
+        case 5: return '주차장 진입';
+        default: return `CAM${camNum}`;
+    }
 }
 
