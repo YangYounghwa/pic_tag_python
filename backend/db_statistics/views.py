@@ -9,7 +9,8 @@ from pathlib import Path
 
 class PageSyncAPIView(APIView):
     def get(self, request):
-        base_dir = Path(__file__).resolve().parent.parent.parent  
+        base_dir = Path(__file__).resolve().parent.parent.parent
+        folder = None 
         if not folder:
             folder = base_dir / "data"
         folder.mkdir(parents=True, exist_ok=True)
@@ -24,6 +25,7 @@ class PageSyncAPIView(APIView):
     
 class PersonDetailAPIView(APIView):
     def get(self, request):
+        folder = None
         base_dir = Path(__file__).resolve().parent.parent.parent  
         if not folder:
             folder = base_dir / "data"

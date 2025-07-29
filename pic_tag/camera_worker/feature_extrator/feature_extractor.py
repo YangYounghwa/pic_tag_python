@@ -25,7 +25,7 @@ import numpy as np
 import time
 import time
 import queue
-
+from datetime import datetime
 from .resizePad import ResizePad
 
 def extract_features(frame_queue, feature_queue, stop_event=None):
@@ -52,12 +52,15 @@ def extract_features(frame_queue, feature_queue, stop_event=None):
     while not stop_event.is_set():
         # Get a frame from the queue
         frame_data = None
+        
         try:
-            frame_data = frame_queue.get(timeout=0.025)
+            frame_data = frame_queue.get(timeout=0.05)
             # Mark the task as done
             frame_queue.task_done()
         except queue.Empty as e:
-            print("Frame queue is empty, sleeping for a while...")
+            now = datetime.now()
+            current_time = now.strftime("%H:%M:%S")
+            print(f"FE : {current_time} :Frame queue is empty, sleeping for a while...")
             sleep(0.1)
             continue
 
