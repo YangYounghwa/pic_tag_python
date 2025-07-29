@@ -1,8 +1,8 @@
-from backend.db_statistics.db_connect import DatabaseManager
-from backend.db_statistics.db_preprocess import DataPreprocessor
-from backend.db_statistics.db_statistics import StatisticsCalculator
-from backend.db_statistics.db_postprocess import StatisticsPostprocessor
-from backend.db_statistics.db_test_utils import generate_dummy_rows
+from .db_connect import DatabaseManager
+from .db_preprocess import DataPreprocessor
+from .db_statistics import StatisticsCalculator
+from .db_postprocess import StatisticsPostprocessor
+from .db_test_utils import generate_dummy_rows
 
 def get_page_sync(db_path_arg):
     """_summary_
