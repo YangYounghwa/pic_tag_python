@@ -53,7 +53,7 @@ def extract_features(frame_queue, feature_queue, stop_event=None):
         # Get a frame from the queue
         frame_data = None
         try:
-            frame_data = frame_queue.get(timeout=0.05)
+            frame_data = frame_queue.get(timeout=0.025)
             # Mark the task as done
             frame_queue.task_done()
         except queue.Empty as e:
