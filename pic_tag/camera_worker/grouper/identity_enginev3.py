@@ -8,7 +8,7 @@ import time
 class IdentityEngine(threading.Thread):
     def __init__(self, shared_queue: Queue, logger=None,
                  sim_threshold=0.7, max_age_sec=86400,
-                 max_prototypes=2, spatial_bias=0.10,
+                 max_prototypes=3, spatial_bias=0.10,
                  spatial_window_size=50, spatial_distance_thresh=20,max_history=20000):
         super().__init__()
         self.queue = shared_queue
