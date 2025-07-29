@@ -1,8 +1,8 @@
-from backend.statistics.db import DatabaseManager
-from backend.statistics.preprocess import DataPreprocessor
-from backend.statistics.statistics import StatisticsCalculator
-from backend.statistics.postprocess import StatisticsPostprocessor
-from backend.statistics.test_utils import generate_dummy_rows
+from backend.db_statistics.db_connect import DatabaseManager
+from backend.db_statistics.db_preprocess import DataPreprocessor
+from backend.db_statistics.db_statistics import StatisticsCalculator
+from backend.db_statistics.db_postprocess import StatisticsPostprocessor
+from backend.db_statistics.db_test_utils import generate_dummy_rows
 
 def main():
     # 1. DB 연결 및 테이블 준비
