@@ -1,3 +1,5 @@
+# backend/camera_stream/consumers.py
+
 from channels.generic.websocket import AsyncWebsocketConsumer
 import asyncio
 import cv2
