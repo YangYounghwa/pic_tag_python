@@ -30,3 +30,9 @@ class StatisticsCalculator:
             visitors = {pid for _, t, pid in time_person if window_start < t <= ts}
             result[row_id] = len(visitors)
         return result
+    
+    # 최근 5명 방문자 ID, 이미지 경로 반환
+    def calculate_recent_visitors(self, rows, count=5):
+        """최근 방문자 ID와 이미지 경로 반환"""
+        recent_visitors = sorted(rows, key=lambda x: x[1], reverse=True)[:count]
+        return [(row[2], row[3]) for row in recent_visitors]
