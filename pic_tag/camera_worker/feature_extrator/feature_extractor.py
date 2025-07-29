@@ -39,7 +39,7 @@ def extract_features(frame_queue, feature_queue, stop_event=None):
     device = torch.device("cpu")
     
     model3 = ReIDAtten_v2()
-    model3.load_state_dict(torch.load(os.path.join(base_dir, "ReIDAttenv2_14999.pth"), map_location=device))
+    model3.load_state_dict(torch.load(os.path.join(base_dir, "ReIDAttenv2_aug_6000.pth"), map_location=device))
 
     model3.eval()
     model3.to(device)
