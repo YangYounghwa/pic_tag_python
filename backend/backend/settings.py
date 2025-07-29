@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'camera_stream',
     'channels',
     'monitoring',
+    'rest_framework'
 ]
 
 MIDDLEWARE = [
