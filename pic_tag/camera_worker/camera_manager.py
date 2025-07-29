@@ -9,7 +9,7 @@ from .cropper import capture_video_frames
 from .feature_extrator import extract_features
 from .grouper import IdentityEngine
 import queue as Queue
-from .grouper.id_logger import IdentityLogger
+from .grouper import IdentityLogger
 import configparser
 from pathlib import Path
 
@@ -39,7 +39,7 @@ def get_rtsp_url_from_config(camera_name):
 
 
 
-def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: list = None,max_fps=10):
+def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: list = None,max_fps=6):
     # Connect to the SQLite database to retrieve camera configurations in real production
    
     stop_event = threading.Event()
@@ -60,6 +60,7 @@ def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: 
     camera_names = config.sections()
     
     logger = IdentityLogger(log_db_path)
+    logger.start()  # <-- required for thread to runa
     
     frame_queue = Queue.Queue(maxsize=250)
     feature_queue = Queue.Queue(maxsize=250)
@@ -75,7 +76,7 @@ def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: 
     threads.append(feature_extractor_thread)
     
 
-    engine = IdentityEngine(feature_queue, sim_threshold=0.80,logger=logger, max_history=2000, max_age_sec=86400)
+    engine = IdentityEngine(feature_queue, sim_threshold=0.85,logger=logger, max_history=2000, max_age_sec=86400)
     grouper_thread = threading.Thread(target=engine.run,args=(stop_event,)) # Assuming camera_id 0 for the grouper
     grouper_thread.start()
     threads.append(grouper_thread)
