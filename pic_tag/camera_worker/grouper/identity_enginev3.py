@@ -5,11 +5,11 @@ import numpy as np
 import time
 
 
-class IdentityEnginev2(threading.Thread):
+class IdentityEngine(threading.Thread):
     def __init__(self, shared_queue: Queue, logger=None,
                  sim_threshold=0.7, max_age_sec=86400,
                  max_prototypes=3, spatial_bias=0.10,
-                 spatial_window_size=50, spatial_distance_thresh=50):
+                 spatial_window_size=50, spatial_distance_thresh=50,max_history=20000):
         super().__init__()
         self.queue = shared_queue
         self.logger = logger
@@ -101,6 +101,7 @@ class IdentityEnginev2(threading.Thread):
 
     def _update_identity(self, pid, timestamp, embedding, bbox, camera_id):
         self.embedding_history[pid].append((timestamp, embedding))
+        self._trim_history(pid)
 
         # Keep prototypes updated
         prototypes = self.prototype_db[pid]
@@ -125,6 +126,7 @@ class IdentityEnginev2(threading.Thread):
         pid = self.person_counter
 
         self.embedding_history[pid].append((timestamp, embedding))
+        self._trim_history(pid)
         self.prototype_db[pid].append(embedding)
 
         self._update_recent_detections(camera_id, timestamp, pid, bbox)
@@ -159,3 +161,8 @@ class IdentityEnginev2(threading.Thread):
     def get_active_identity_count(self):
         with self.lock:
             return len(self.prototype_db)
+        
+    def _trim_history(self, pid):
+        history = self.embedding_history[pid]
+        while len(history) > self.max_history:
+            history.popleft()
