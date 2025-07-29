@@ -678,6 +678,46 @@ body {
     border-bottom: none;
 }
 
+/* 비디오 검색 바 */
+.video-search-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.video-search-bar input {
+    padding: 12px 18px;
+    border-radius: 8px;
+    border: 1.5px solid #b0b6c6;
+    width: 400px;
+    font-size: 1.1rem;
+    margin-right: 12px;
+    transition: border 0.2s;
+}
+
+.video-search-bar input:focus {
+    border: 1.5px solid #1976d2;
+    outline: none;
+}
+
+.video-search-bar button {
+    padding: 12px 32px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(90deg, #1976d2 60%, #42a5f5 100%);
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.video-search-bar button:hover {
+    background: linear-gradient(90deg, #1565c0 60%, #1976d2 100%);
+    box-shadow: 0 4px 16px rgba(25, 118, 210, 0.15);
+}
+
 /* 반응형 */
 @media (max-width: 1024px) {
 
