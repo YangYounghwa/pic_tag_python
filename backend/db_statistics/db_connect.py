@@ -9,6 +9,7 @@ class DatabaseManager:
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(db_path)
         self.conn.row_factory = sqlite3.Row
+        # self.conn.row_factory = sqlite3.Row
         self._create_table()
 
     def _create_table(self):
@@ -45,9 +46,10 @@ class DatabaseManager:
         self.conn.commit()
 
     def fetch_statistics(self, start_time=None, end_time=None):
-        """통계 데이터 조회."""
+        """Fetch rows as dictionaries."""
         query = "SELECT * FROM identity_log"
         params = []
+
         if start_time and end_time:
             query += " WHERE timestamp BETWEEN ? AND ?"
             params = [start_time, end_time]
@@ -57,8 +59,9 @@ class DatabaseManager:
         elif end_time:
             query += " WHERE timestamp <= ?"
             params = [end_time]
+
         cursor = self.conn.execute(query, params)
-        return [tuple(row) for row in cursor.fetchall()]
+        return [dict(row) for row in cursor.fetchall()] 
 
     def close(self):
         self.conn.close()

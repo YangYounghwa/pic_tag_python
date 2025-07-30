@@ -29,7 +29,7 @@ def get_rtsp_url_from_config(camera_name):
     ip = cam.get("ip")
     username = cam.get("username")
     password = cam.get("password")
-    path = cam.get("path1")  # "path1" or "path2"
+    path = cam.get("path2")  # "path1" or "path2"
 
     if not all([ip, username, password, path]):
         print(f"❌ Missing values for camera: {camera_name}")
@@ -39,7 +39,7 @@ def get_rtsp_url_from_config(camera_name):
 
 
 
-def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: list = None,max_fps=6):
+def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: list = None,max_fps=2):
     # Connect to the SQLite database to retrieve camera configurations in real production
    
     stop_event = threading.Event()
