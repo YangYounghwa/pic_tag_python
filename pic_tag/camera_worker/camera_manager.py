@@ -6,7 +6,7 @@ import sqlite3
 import threading
 from .cropper import capture_frames
 from .cropper import capture_video_frames
-from .feature_extrator import extract_features
+from .feature_extractor import extract_features
 from .grouper import IdentityEngine
 import queue as Queue
 from .grouper import IdentityLogger
