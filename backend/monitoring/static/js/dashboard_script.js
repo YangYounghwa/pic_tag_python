@@ -911,10 +911,10 @@ async function fetchStatsAndUpdate() {
         // --- Numerical stats ---
         const currentOnCCTV = data.current_on_CCTV || 0;
         const last24People = data.last_24_people || 0;
-        const stayCount = data.current_people?.stay_count || 0;
-        const goneCount = data.current_people?.gone_count || 0;
+        const stayCount = data.current_people;
+        const goneCount = data.last_24_people - data.current_people;
 
-        const currentTotal = stayCount + goneCount;
+        const currentTotal = last24People;
         const percentage = currentTotal > 0 ? ((currentOnCCTV / currentTotal) * 100).toFixed(1) + "%" : "0%";
 
         const elLast24 = document.getElementById('last_24_hrs_people');

@@ -25,11 +25,11 @@ def get_page_sync(db_path):
 
     # 2. 데이터 조회
     now = datetime.now()
-    start_20s = (now - timedelta(seconds=20)).strftime("%Y-%m-%d %H:%M:%S")
+    start_60s = (now - timedelta(seconds=60)).strftime("%Y-%m-%d %H:%M:%S")
     start_15m = (now - timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M:%S")
     start_24h = (now - timedelta(hours=24)).strftime("%Y-%m-%d %H:%M:%S")
 
-    rows_20s = db.fetch_statistics(start_time=start_20s)
+    rows_60s = db.fetch_statistics(start_time=start_60s)
     rows_15m = db.fetch_statistics(start_time=start_15m)
     rows_24h = db.fetch_statistics(start_time=start_24h)
 
@@ -44,13 +44,13 @@ def get_page_sync(db_path):
             "recent_5_list": []
         }
 
-    rows_20s = pre.filter_row_outliers(rows_20s)
+    rows_60s = pre.filter_row_outliers(rows_60s)
     rows_15m = pre.filter_row_outliers(rows_15m)
     rows_24h = pre.filter_row_outliers(rows_24h)
 
     # 4. 통계 계산
     calc = StatisticsCalculator()
-    current_on_CCTV = calc.calculate_visitor_count(rows_20s)
+    current_on_CCTV = calc.calculate_visitor_count(rows_60s)
     current_people = calc.calculate_visitor_count(rows_15m)
     last_24_people = calc.calculate_visitor_count(rows_24h)
     recent_5_list = calc.calculate_recent_visitors(rows_24h, count=5)
