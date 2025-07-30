@@ -1,10 +1,40 @@
+
 import os
+import shutil
 from ultralytics import YOLO
 import cv2
+from pathlib import Path
 
-
+def is_model_download(model_name):
+    print(f"Calling is_model_download for model: {model_name}")
+    print(f"Current working directory: {os.getcwd()}")
+    model_path = f"models/{model_name}"
+    print(f"Checking model path: {model_path}")
+    if not os.path.exists(model_path):
+        print(f"Model '{model_name}' not found. Downloading...")
+        try:
+            # Let Ultralytics download the model to its cache
+            model = YOLO(model_name)
+            # Find the cached model path (Ultralytics stores it in ~/.cache/ultralytics/)
+            cached_model_path = model.model.pt_path if hasattr(model.model, 'pt_path') else f"~/.cache/ultralytics/{model_name}"
+            cached_model_path = os.path.expanduser(cached_model_path)
+            if not os.path.exists(cached_model_path):
+                print(f"Cached model not found at {cached_model_path}")
+                return None
+            # Create the models/ directory if it doesn't exist
+            os.makedirs(os.path.dirname(model_path), exist_ok=True)
+            # Copy the cached model to the desired path
+            shutil.copy(cached_model_path, model_path)
+            print(f"Model '{model_name}' downloaded and copied to {model_path}.")
+        except Exception as e:
+            print(f"Error downloading or copying model '{model_name}': {e}")
+            return None
+    else:
+        print(f"Model '{model_name}' already exists at {model_path}.")
+    return model_path
 
 def model_load(model_name):
+    print(f"Loading model from: {model_name}")
     try:
         model = YOLO(model_name)
         print(f"'{model_name}' model loaded successfully.")
@@ -13,12 +43,11 @@ def model_load(model_name):
         print(f"Error loading '{model_name}': {e}")
         return None
 
-
 def make_folder(folder_name):
+    # print(f"Creating folder if not exists: {folder_name}")
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
         print(f"{folder_name} folder created.")
-
 
 def draw_bounding_box(
     image, bbox, class_name, confidence, color=(0, 255, 0), thickness=2, track_id=None
