@@ -1,61 +1,70 @@
+# backend/db_statistics/get_by_id.py
+
 from .db_connect import DatabaseManager
 from .db_preprocess import DataPreprocessor
 from .db_statistics import StatisticsCalculator
 from .db_postprocess import StatisticsPostprocessor
-from .db_test_utils import generate_dummy_rows
+from datetime import datetime, timedelta
 
-def get_page_sync(db_path_arg):
-    """_summary_
-    한페이지 전체 조회를 하였을 때에
+def get_page_sync(db_path):
+    """페이지 전체 통계 데이터를 반환.
 
-    페이지 전체에 내보내는 통계 값들을 dictionary 형태로 내보냅니다.
-
-     
     Args:
-        db_path_arg (_type_): _description_
+        db_path (str): 데이터베이스 파일 경로
 
     Returns:
-        _type_: _description_
+        dict: {
+            "current_on_CCTV": int (최근 20초 내 인원),
+            "last_24_people": int (최근 24시간 내 인원),
+            "current_people": int (최근 15분 내 인원),
+            "recent_5_list": list [(person_id, file_path), ...]
+        }
     """
-    # 1. DB 연결 및 테이블 준비
-    db_path = db_path_arg
+    # 1. DB 연결
     db = DatabaseManager(db_path)
-    # db.clear_table()
 
-    # 2. 더미 데이터 생성 및 삽입
-    dummy_rows = generate_dummy_rows(100)
-    db.insert_dummy_data(dummy_rows)
+    # 2. 데이터 조회
+    now = datetime.now()
+    start_20s = (now - timedelta(seconds=20)).strftime("%Y-%m-%d %H:%M:%S")
+    start_15m = (now - timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M:%S")
+    start_24h = (now - timedelta(hours=24)).strftime("%Y-%m-%d %H:%M:%S")
 
-    # 3. DB에서 데이터 조회
-    rows = db.fetch_statistics()
+    rows_20s = db.fetch_statistics(start_time=start_20s)
+    rows_15m = db.fetch_statistics(start_time=start_15m)
+    rows_24h = db.fetch_statistics(start_time=start_24h)
 
-    # 4. 행 단위 전처리
+    # 3. 데이터 전처리
     pre = DataPreprocessor()
-    rows = pre.filter_row_outliers(rows)
+    if not pre.validate(rows_24h):
+        db.close()
+        return {
+            "current_on_CCTV": 0,
+            "last_24_people": 0,
+            "current_people": 0,
+            "recent_5_list": []
+        }
 
-    # 5. 통계 계산
+    rows_20s = pre.filter_row_outliers(rows_20s)
+    rows_15m = pre.filter_row_outliers(rows_15m)
+    rows_24h = pre.filter_row_outliers(rows_24h)
+
+    # 4. 통계 계산
     calc = StatisticsCalculator()
-    visitor_count = calc.calculate_visitor_count(rows)
-    stay_times = calc.calculate_stay_times(rows)
-    current_visitors_per_row = calc.calculate_current_visitors(rows)
+    current_on_CCTV = calc.calculate_visitor_count(rows_20s)
+    current_people = calc.calculate_visitor_count(rows_15m)
+    last_24_people = calc.calculate_visitor_count(rows_24h)
+    recent_5_list = calc.calculate_recent_visitors(rows_24h, count=5)
 
-    # 6. 후처리 (예: 체류 시간 기준 person_id 필터링)
+    # 5. 후처리
     post = StatisticsPostprocessor()
-    filtered_rows = post.filter_by_stay_time(rows, stay_times, min_seconds=30, max_seconds=3600)
+    rows_24h = post.filter_by_stay_time(rows_24h, calc.calculate_stay_times(rows_24h), min_seconds=30, max_seconds=3600)
 
-    # 7. 결과 출력 (간단 예시)
-    print(f"유니크 방문자 수: {visitor_count}")
-    print(f"person_id별 체류 시간(초): {stay_times}")
-    print(f"각 행 기준 1분 이내 체류 인원: {list(current_visitors_per_row.items())[:5]} ...")
-    print(f"후처리(체류시간 기준) 후 row 수: {len(filtered_rows)}")
-
-    # 8. DB 연결 종료
+    # 6. DB 연결 종료
     db.close()
-    
-    ### RETURN MUST BE IN FORM OF DICTIONARY
-    
-     
-    return { 
-            "unique_visitor": visitor_count,
-            
-            }
+
+    return {
+        "current_on_CCTV": current_on_CCTV,
+        "last_24_people": last_24_people,
+        "current_people": current_people,
+        "recent_5_list": recent_5_list
+    }
