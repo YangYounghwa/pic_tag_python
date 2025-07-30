@@ -8,7 +8,7 @@ from time import sleep
 from openvino.runtime import Core
 import torchvision.transforms as transforms
 
-from utils import ResizePad  # Make sure ResizePad is defined or imported
+from .resizePad import ResizePad  # Make sure ResizePad is defined or imported
 
 def extract_features(frame_queue, feature_queue, stop_event=None):
     print("Feature extraction thread started.")
@@ -17,7 +17,7 @@ def extract_features(frame_queue, feature_queue, stop_event=None):
 
     # Load OpenVINO model
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    model_xml_path = os.path.join(base_dir, "reid_model.xml")  # change if filename differs
+    model_xml_path = os.path.join(base_dir, "model.xml")  # change if filename differs
     print(f"Loading OpenVINO model from: {model_xml_path}")
 
     core = Core()
