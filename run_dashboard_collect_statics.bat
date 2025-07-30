@@ -5,7 +5,7 @@
 CALL conda activate dashboard_v1
 
 :: 3. Change to your project directory
-cd /d D:\Dropbox\LEARN\vision_project1\product_python\backend
+cd /d c:\Users\astro\pkb_test\pic_tag_python
 
 :: 4. Run Python script
 python manage.py collectstatic
