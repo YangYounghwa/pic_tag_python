@@ -2568,6 +2568,7 @@
 	<rt_info>
 		<Runtime_version value="2024.6.0-17404-4c0f47d2335-releases/2024/6" />
 		<conversion_parameters>
+			<compress_to_fp16 value="False" />
 			<is_python_object value="False" />
 		</conversion_parameters>
 	</rt_info>
