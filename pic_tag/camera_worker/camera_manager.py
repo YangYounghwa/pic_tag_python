@@ -92,6 +92,8 @@ def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: 
             rtsp_url = get_rtsp_url_from_config(camera_name)
             if not rtsp_url:
                 continue
+            
+            print(f"🔗 Attempting to connect to: {rtsp_url}")  # 디버그 로그 추가
 
             camera_thread = threading.Thread(
                 target=capture_frames,

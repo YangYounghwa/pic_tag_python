@@ -6,10 +6,10 @@ def main():
         print("Starting all cameras...")
         start_all_cameras()
     if (len(os.sys.argv) > 1 and os.sys.argv[1] == "video"):
-        num_of_videos = os.sys.argv[3]
+        num_of_videos = os.sys.argv[2]  # 3 → 2로 수정
         v_list = []
         for i in range(int(num_of_videos)):
-            v_list.append(os.sys.argv[4+i])
+            v_list.append(os.sys.argv[3+i])
         start_all_cameras(live=False,camera_path_list=v_list)
         pass 
         # Implement stop logic if needed

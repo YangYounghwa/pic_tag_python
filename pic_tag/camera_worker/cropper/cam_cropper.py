@@ -38,10 +38,13 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
     make_folder(main_data_folder_path)
     make_folder(sub_data_folder_path)
 
+    # RTSP 연결 타임아웃 설정
     cap = cv2.VideoCapture(cam_num)
-
+    cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 10000)  # 10초 타임아웃
+    cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 10000)  # 읽기 타임아웃
+    
     if not cap.isOpened():
-        print(f"Failed to open webcam (camera index {cam_num}). Please check if the webcam is connected and available.")
+        print(f"Failed to open camera stream (source: {cam_num}). Please check if the camera is connected and RTSP URL is correct.")
         return
 
     fps = cap.get(cv2.CAP_PROP_FPS)

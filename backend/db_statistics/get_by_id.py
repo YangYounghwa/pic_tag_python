@@ -3,6 +3,8 @@ from .db_preprocess import DataPreprocessor
 from .db_statistics import StatisticsCalculator
 from .db_postprocess import StatisticsPostprocessor
 from .db_test_utils import generate_dummy_rows
+import os
+import base64
 
 
 def get_info_by_id(db_path_arg,id):
@@ -58,3 +60,49 @@ def get_info_by_id(db_path_arg,id):
             "unique_visitor": visitor_count,
             
             }
+    
+def get_person_images_by_id(db_path, person_id) : 
+    """
+    person_id에 해당하는 이미지 파일들을 조회해서 base64로 반환
+    """
+    
+    from .db_connect import DatabaseManager
+    
+    db = DatabaseManager(db_path)
+    
+    #해당 person_id의 이미지 파일 경로들 조회
+    query = """
+    SELECT file_path, timestamp, camera_id
+    FROM identity_log
+    WHERE person_id = ? AND file_path IS NOT NULL
+    ORDER BY timestamp DESC
+    LIMIT 10
+    """
+    
+    cursor = db.conn.execute(query, (person_id,))
+    rows = cursor.fetchall()
+    
+    images = []
+    for row in rows:
+        file_path = row[0]
+        timestamp = row[1]
+        camera_id = row[2]
+
+        if file_path and (file_path.endswith('.jpg') or file_path.endswith('.png')):
+            if os.path.exists(file_path):
+                try : 
+                    with open(file_path, "rb") as img_file:
+                        img_data = base64.b64encode(img_file.read()).decode('utf-8')
+                        
+                    images.append({
+                        'filename' : os.path.basename(file_path),
+                        'data' : img_data,
+                        'timestamp' : row[1],
+                        'camera_id' : row[2],
+                        'type' : 'image/jpeg' if file_path.endswith('.jpg') else 'image/png'
+                    })
+                    
+                except :
+                    continue # 파일 읽기 실패하면 건너뛰기
+                
+    return images             

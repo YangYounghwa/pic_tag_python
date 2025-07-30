@@ -6,32 +6,31 @@ from .page_sync import get_page_sync
 from .get_by_id import get_info_by_id
 from pathlib import Path
 
-
 class PageSyncAPIView(APIView):
     def get(self, request):
         base_dir = Path(__file__).resolve().parent.parent.parent
-        folder = None 
+        folder = None
         if not folder:
             folder = base_dir / "data"
         folder.mkdir(parents=True, exist_ok=True)
         log_db_path = folder / "db" / "identity_log.db"
         result = get_page_sync(log_db_path)
-        
-        # current_on_CCTV 
-        # last_24_people 
+
+        # current_on_CCTV
+        # last_24_people
         # current_people
         result = {
             "current_on_CCTV"  : 2,
             "last_24_people " : 59,
             "current_people" : 23,
         }
-        
+
         return Response(result, status=status.HTTP_200_OK)
-    
+
 class PersonDetailAPIView(APIView):
     def get(self, request):
         folder = None
-        base_dir = Path(__file__).resolve().parent.parent.parent  
+        base_dir = Path(__file__).resolve().parent.parent.parent
         if not folder:
             folder = base_dir / "data"
         folder.mkdir(parents=True, exist_ok=True)
@@ -41,5 +40,5 @@ class PersonDetailAPIView(APIView):
             "one" : "one",
             "two" : "two"
         }
-         
-        return Response(result, status=status.HTTP_200_OK) 
+
+        return Response(result, status=status.HTTP_200_OK)

@@ -3,6 +3,7 @@ let currentLocation = '';
 let locationName = '';
 let userLocations = {}; // 사용자별 위치 정보 저장
 let streamSocket = null;
+let exploreAutoUpdateInterval = null;
 
 const MAIN_CAMERA_INTERVAL = 100; // ms (2 FPS)
 let lastMainFrameTime = 0;
@@ -84,12 +85,44 @@ function showSection(sectionName) {
 
     // 통계 페이지 초기화
     if (sectionName === 'statistics') {
+        stopExploreAutoUpdate(); // 다른 섹션으로 이동시 탐색 자동 업데이트 중지
         setTimeout(() => {
             initializeCharts();
             updateLogTable();
             updateTrackingGrid();
             refreshLogs();
         }, 100);
+    }
+    
+    // 탐색 페이지 초기화 및 자동 업데이트 시작 (일시적으로 비활성화)
+    if (sectionName === 'detection') {
+        // setTimeout(() => {
+        //     startExploreAutoUpdate(15); // 15초마다 자동 업데이트
+        // }, 100);
+    } else {
+        stopExploreAutoUpdate(); // 탐색 탭이 아닌 경우 자동 업데이트 중지
+    }
+}
+
+// 탐색 탭 자동 업데이트 시작
+function startExploreAutoUpdate(intervalSeconds = 15) {
+    // 기존 자동 업데이트가 있다면 중지
+    stopExploreAutoUpdate();
+    
+    // 즉시 한 번 실행
+    displayRecentPeopleInExploreTab();
+    
+    // 주기적 실행
+    exploreAutoUpdateInterval = setInterval(() => {
+        displayRecentPeopleInExploreTab();
+    }, intervalSeconds * 1000);
+}
+
+// 탐색 탭 자동 업데이트 중지
+function stopExploreAutoUpdate() {
+    if (exploreAutoUpdateInterval) {
+        clearInterval(exploreAutoUpdateInterval);
+        exploreAutoUpdateInterval = null;
     }
 }
 
@@ -1022,4 +1055,171 @@ function camNumberToLabel(camNum) {
         default: return `CAM${camNum}`;
     }
 }
+
+// Person ID로 이미지 조회하는 함수
+async function getPersonImages(personId) {
+    try {
+        const response = await fetch(`/sync/get_by_id/${personId}/`);
+        const data = await response.json();
+        
+        if (data.status === 'success' && data.images && data.images.length > 0) {
+            return data.images;
+        } else {
+            return [];
+        }
+        
+    } catch (error) {
+        console.error('이미지 조회 실패:', error);
+        return null;
+    }
+}
+
+// 여러 Person ID를 순차적으로 조회하여 최근 감지된 사람들 찾기
+async function findRecentPeople(startId = 1, maxCheck = 50, maxResults = 5) {
+    const foundPeople = [];
+    
+    for (let personId = startId; personId <= startId + maxCheck - 1; personId++) {
+        const images = await getPersonImages(personId);
+        
+        if (images && images.length > 0) {
+            foundPeople.push({
+                person_id: personId,
+                images: images,
+                image_count: images.length
+            });
+            
+            if (foundPeople.length >= maxResults) {
+                break;
+            }
+        }
+        
+        // API 부하 방지
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    return foundPeople;
+}
+
+// 탐색 탭에 최근 감지된 사람들 표시
+async function displayRecentPeopleInExploreTab() {
+    // 원본 구조의 crop-item 클래스 사용
+    const cropItems = document.querySelectorAll('.crop-grid .crop-item');
+    
+    // DB 연결 여부를 먼저 확인
+    try {
+        // 간단한 API 연결 테스트
+        const testResponse = await fetch('/sync/page/');
+        if (!testResponse.ok) {
+            throw new Error('DB 연결 안됨');
+        }
+        
+        // DB 연결 성공시에만 박스들을 초기화
+        cropItems.forEach((item, index) => {
+            item.innerHTML = '조회 중...';
+        });
+        
+    } catch (error) {
+        console.log('DB 미연결 상태 - 탐색 탭 기본 박스 유지:', error);
+        // DB가 연결되지 않은 경우 원본 HTML 구조 유지하고 함수 종료
+        return;
+    }
+    
+    try {
+        const recentPeople = await findRecentPeople(1, 50, 5);
+        
+        // 각 crop-item div에 이미지 설정
+        cropItems.forEach((item, index) => {
+            if (index < recentPeople.length) {
+                const person = recentPeople[index];
+                const firstImage = person.images[0];
+                // 실제 감지된 시간 사용
+                const detectedTime = firstImage.timestamp ? 
+                    new Date(firstImage.timestamp).toLocaleTimeString('ko-KR', { hour12: false }) : 
+                    `14:30:${15 + index * 7}`;
+                
+                item.innerHTML = `
+                    <div style="text-align: center; height: 100%;">
+                        <img src="data:${firstImage.type};base64,${firstImage.data}" 
+                             style="width: 100%; height: 60px; object-fit: cover; border-radius: 3px; margin-bottom: 3px;"
+                             onclick="showPersonDetails(${person.person_id})">
+                        <div style="font-size: 11px; margin-bottom: 2px;">ID: ${person.person_id}</div>
+                        <div style="font-size: 10px; color: #666;">${detectedTime}</div>
+                    </div>
+                `;
+                // 기존 onclick 이벤트 제거하고 실제 시간으로 새로 설정
+                item.removeAttribute('onclick');
+                item.setAttribute('onclick', `selectCrop(this, '${detectedTime}')`);
+            } else {
+                item.innerHTML = 'Person ' + (index + 1);
+                // onclick 이벤트 복원
+                item.setAttribute('onclick', `selectCrop(this, '14:30:${15 + index * 7}')`);
+            }
+        });
+        
+    } catch (error) {
+        console.log('데이터 조회 실패, 기본 박스 표시:', error);
+        // 에러 시 원본 텍스트로 복원
+        cropItems.forEach((item, index) => {
+            item.innerHTML = 'Person ' + (index + 1);
+            // onclick 이벤트 복원
+            item.setAttribute('onclick', `selectCrop(this, '14:30:${15 + index * 7}')`);
+        });
+    }
+}
+
+// Person 상세 정보 표시
+async function showPersonDetails(personId) {
+    const images = await getPersonImages(personId);
+    
+    if (images && images.length > 0) {
+        const newWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes');
+        let html = `
+            <html>
+            <head><title>Person ${personId} 상세 정보</title></head>
+            <body style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2>Person ID: ${personId} (총 ${images.length}개 이미지)</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+        `;
+        
+        images.forEach(image => {
+            html += `
+                <div style="border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                    <img src="data:${image.type};base64,${image.data}" 
+                         style="width: 100%; height: 150px; object-fit: cover;">
+                    <p style="font-size: 12px; margin: 5px 0;">
+                        <strong>파일:</strong> ${image.filename}<br>
+                        <strong>시간:</strong> ${image.timestamp}<br>
+                        <strong>카메라:</strong> ${image.camera_id}
+                    </p>
+                </div>
+            `;
+        });
+        
+        html += `
+                </div>
+            </body>
+            </html>
+        `;
+        
+        newWindow.document.write(html);
+    }
+}
+
+// 페이지 종료시 자동 업데이트 정리
+window.addEventListener('beforeunload', function() {
+    stopExploreAutoUpdate();
+});
+
+// 페이지 숨김시 자동 업데이트 중지, 다시 보일때 재시작
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        stopExploreAutoUpdate();
+    } else {
+        // 탐색 탭이 활성화되어 있을 때만 재시작
+        const detectionSection = document.getElementById('detection');
+        if (detectionSection && !detectionSection.classList.contains('hidden')) {
+            startExploreAutoUpdate(15);
+        }
+    }
+});
 
