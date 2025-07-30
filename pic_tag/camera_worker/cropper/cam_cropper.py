@@ -19,7 +19,7 @@ global_image_sequence_counter = 0
 # display_frame_queue = queue.Queue(maxsize=2) 
 
 
-
+##
 
 def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path = None, video=True, max_fps=6, stop_event=None,cam_index=1):
     
