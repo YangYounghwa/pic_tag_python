@@ -88,8 +88,15 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
         frame_count += 1
 
         if not ret:
-            print(f"Webcam stream for cam_num {cam_num} ended or error occured.")
-            break
+            print(f"[{datetime.datetime.now()}] ❌ Failed to read from cam_num {cam_num}. Attempting reconnection...")
+            cap.release()
+            time.sleep(5)  # wait before retry
+            cap = cv2.VideoCapture(cam_num)
+            if not cap.isOpened():
+                print(f"[{datetime.datetime.now()}] ❌ Reconnection failed. Will retry...")
+                continue  # try again in next iteration
+            print(f"[{datetime.datetime.now()}] 🔁 Reconnected to cam_num {cam_num}")
+            continue  # try reading again after reconnect
 
         current_time_dt = datetime.datetime.now()
         timestamp=current_time_dt  

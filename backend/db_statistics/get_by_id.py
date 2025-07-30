@@ -33,7 +33,7 @@ def get_info_by_id(db_path, person_id):
         db.close()
         return {"recent_actions": [], "stay_time": 0.0}
 
-    rows = pre.filter_row_outliers(rows)
+    # rows = pre.filter_row_outliers(rows)
     if not rows:
         db.close()
         return {"recent_actions": [], "stay_time": 0.0}
@@ -48,7 +48,7 @@ def get_info_by_id(db_path, person_id):
     filtered_rows = post.filter_by_stay_time(
         rows, stay_times, min_seconds=30, max_seconds=3600
     )
-    filtered_rows = post.filter_by_min_visits(filtered_rows, min_visits=1)
+    # filtered_rows = post.filter_by_min_visits(filtered_rows, min_visits=1)
 
     # 6. 행동 리스트 생성 (최소 3분 간격)
     recent_actions = []
@@ -57,7 +57,7 @@ def get_info_by_id(db_path, person_id):
         current_ts = datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S")
         if (
             last_timestamp is None
-            or (last_timestamp - current_ts).total_seconds() >= 180
+            or (last_timestamp - current_ts).total_seconds() >= 30
         ):
             recent_actions.append(
                 {
