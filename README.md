@@ -16,6 +16,11 @@ python==3.12 환경에서 제작되었지만 다른 환경에서도 (아마도) 
 pip install -r requirements.txt
 ```
 
+feature_extractor\__init__.py 에서 from .feature_extractorv2를 .feature_extractor 로 
+cropper\__init__.py 에서 from .cam_cropperv2를 .cam_cropper 으로 
+변경하시면 인텔이 아닌 cpu에서도 돌아갑니다.
+
+
 ## 서버 실행
 
 ```
