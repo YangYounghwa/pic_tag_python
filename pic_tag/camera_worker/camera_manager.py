@@ -39,7 +39,7 @@ def get_rtsp_url_from_config(camera_name):
 
 
 
-def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: list = None,max_fps=2):
+def start_all_cameras(folder: Path = None, live: bool = True, camera_path_list: list = None,max_fps=3):
     # Connect to the SQLite database to retrieve camera configurations in real production
    
     stop_event = threading.Event()
