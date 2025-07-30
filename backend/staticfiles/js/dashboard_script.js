@@ -88,7 +88,7 @@ function showSection(sectionName) {
             initializeCharts();
             updateLogTable();
             updateTrackingGrid();
-            refreshLogs();
+            // refreshLogs();
         }, 100);
     }
 }
@@ -212,37 +212,37 @@ function addNewLogEntry() {
 }
 
 // 감지 로그 업데이트
-function updateDetectionLog() {
-    const detectionLog = document.querySelector('.detection-log');
-    if (detectionLog && Math.random() < 0.1) { // 10% 확률로 새 감지 로그 추가
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('ko-KR', { hour12: false });
-        const actions = [
-            '인원 감지 - 현관 입구 진입',
-            '인원 감지 - 주차장 이동',
-            '인원 감지 - 복도 통과',
-            '인원 감지 - 비상구 접근',
-            '인원 감지 - 대기 중'
-        ];
-        const action = actions[Math.floor(Math.random() * actions.length)];
+// function updateDetectionLog() {
+//     const detectionLog = document.querySelector('.detection-log');
+//     if (detectionLog && Math.random() < 0.1) { // 10% 확률로 새 감지 로그 추가
+//         const now = new Date();
+//         const timeString = now.toLocaleTimeString('ko-KR', { hour12: false });
+//         const actions = [
+//             '인원 감지 - 현관 입구 진입',
+//             '인원 감지 - 주차장 이동',
+//             '인원 감지 - 복도 통과',
+//             '인원 감지 - 비상구 접근',
+//             '인원 감지 - 대기 중'
+//         ];
+//         const action = actions[Math.floor(Math.random() * actions.length)];
 
-        const newEntry = document.createElement('div');
-        newEntry.className = 'log-entry';
-        newEntry.innerHTML = `
-                    <div class="log-time">${timeString}</div>
-                    <div class="log-action">${action}</div>
-                `;
+//         const newEntry = document.createElement('div');
+//         newEntry.className = 'log-entry';
+//         newEntry.innerHTML = `
+//                     <div class="log-time">${timeString}</div>
+//                     <div class="log-action">${action}</div>
+//                 `;
 
-        const logContainer = detectionLog.querySelector('h3').nextSibling;
-        detectionLog.insertBefore(newEntry, logContainer.nextSibling);
+//         const logContainer = detectionLog.querySelector('h3').nextSibling;
+//         detectionLog.insertBefore(newEntry, logContainer.nextSibling);
 
-        // 최대 15개 로그만 유지
-        const entries = detectionLog.querySelectorAll('.log-entry');
-        if (entries.length > 15) {
-            detectionLog.removeChild(entries[entries.length - 1]);
-        }
-    }
-}
+//         // 최대 15개 로그만 유지
+//         const entries = detectionLog.querySelectorAll('.log-entry');
+//         if (entries.length > 15) {
+//             detectionLog.removeChild(entries[entries.length - 1]);
+//         }
+//     }
+// }
 
 // 자동 재생 시뮬레이션
 function simulatePlayback() {
@@ -266,7 +266,7 @@ function simulatePlayback() {
 setInterval(updateTime, 1000);          // 1초마다 시간 업데이트
 
 setInterval(addNewLogEntry, 15000);     // 15초마다 새 로그 확인
-setInterval(updateDetectionLog, 8000);  // 8초마다 감지 로그 업데이트
+// setInterval(updateDetectionLog, 8000);  // 8초마다 감지 로그 업데이트
 setInterval(simulatePlayback, 2000);    // 2초마다 재생 시뮬레이션
 
 // 초기 설정
@@ -643,17 +643,17 @@ function getCameraIdByLocation(location) {
 }
 
 // 로그 새로고침
-function refreshLogs() {
-    const filter = document.getElementById('logFilter').value;
-    updateLogTable(filter);
-    updateTrackingGrid();
+// function refreshLogs() {
+//     const filter = document.getElementById('logFilter').value;
+//     updateLogTable(filter);
+//     updateTrackingGrid();
 
-    // 통계 카드 업데이트
-    document.getElementById('todayDetections').textContent = identityLogs.length;
-    document.getElementById('uniquePersons').textContent = [...new Set(identityLogs.map(log => log.person_id))].length;
-    document.getElementById('activeCameras').textContent = [...new Set(identityLogs.map(log => log.camera_id))].length;
-    document.getElementById('avgConfidence').textContent = '94.2%';
-}
+//     // 통계 카드 업데이트
+//     document.getElementById('todayDetections').textContent = identityLogs.length;
+//     document.getElementById('uniquePersons').textContent = [...new Set(identityLogs.map(log => log.person_id))].length;
+//     document.getElementById('activeCameras').textContent = [...new Set(identityLogs.map(log => log.camera_id))].length;
+//     document.getElementById('avgConfidence').textContent = '94.2%';
+// }
 
 // 로그 필터 이벤트
 document.addEventListener('DOMContentLoaded', function () {
@@ -967,39 +967,38 @@ function selectCrop(elem, personId) {
         })
         .then(data => {
             const logContainer = document.querySelector('.detection-log');
-
-            // Clear old logs except the title
             logContainer.innerHTML = '<h3 style="margin-bottom: 15px;">감지 로그</h3>';
 
             const actions = data.recent_actions || [];
 
-            actions.forEach(entry => {
-                const time = entry.timestamp || '';
-                const cam = camNumberToLabel(entry.cam_num);
-                const bbox = entry.bounding_box || [];
+            if (actions.length === 0) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'log-entry';
+                emptyDiv.textContent = '최근 감지 없음';
+                logContainer.appendChild(emptyDiv);
+                return;
+            }
 
+            const fragment = document.createDocumentFragment();
+
+            actions.forEach(entry => {
                 const logEntry = document.createElement('div');
                 logEntry.className = 'log-entry';
 
-                const timeDiv = document.createElement('div');
-                timeDiv.className = 'log-time';
-                timeDiv.textContent = formatTime(time);
+                logEntry.innerHTML = `
+                    <div class="log-time">${formatTime(entry.timestamp)}</div>
+                    <div class="log-action">인원 감지 - ${camNumberToLabel(entry.cam_num)}</div>
+                `;
 
-                const actionDiv = document.createElement('div');
-                actionDiv.className = 'log-action';
-                actionDiv.textContent = `인원 감지 - ${cam}`;
-
-                logEntry.appendChild(timeDiv);
-                logEntry.appendChild(actionDiv);
-
-                logContainer.appendChild(logEntry);
+                fragment.appendChild(logEntry);
             });
+
+            logContainer.appendChild(fragment);
         })
         .catch(error => {
             console.error("Error in selectCrop:", error);
         });
 }
-
 
 
 function formatTime(timestamp) {
