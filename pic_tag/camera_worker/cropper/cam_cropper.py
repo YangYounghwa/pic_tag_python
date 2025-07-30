@@ -59,6 +59,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
         print(f"{model_name} model loading failed. Exiting capture_frames.")
         cap.release()
         return
+    print("model loaded")
 
     frame_count = 0
     person_class_id = None
@@ -93,6 +94,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
         # --- 객체 탐지 및 트래킹 ---
         results = model.track(
             frame, persist=True, tracker="bytetrack.yaml", verbose=False, classes=person_class_id, conf=0.5
+
         )
 
         annotated_frame = frame.copy() # 원본 프레임 복사
