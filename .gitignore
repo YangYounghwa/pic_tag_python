@@ -1,5 +1,8 @@
 .venv/
 */.venv/
+venv/
+venv*/
+*/venv/
 run_live.bat
 run_video.bat
 *.mp4
