@@ -29,7 +29,7 @@ cd pic_tag
 python main.py live
 ```
 
-
+video 전용
 ```
 cd pic_tag
 python main.py video 2 path_to_video1 path_to_video2

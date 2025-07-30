@@ -30,7 +30,8 @@ class StatisticsCalculator:
         stay_times = {}
         for row in rows:
             person_id = row["person_id"]
-            timestamp = datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S")
+            timestamp = datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S.%f")
+            # timestamp = datetime.strptime(row["timestamp"], "%Y-%m-%d %H:%M:%S")
             if person_id not in stay_times:
                 stay_times[person_id] = [timestamp, timestamp]
             else:
