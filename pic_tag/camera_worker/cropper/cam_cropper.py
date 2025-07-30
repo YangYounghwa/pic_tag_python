@@ -19,7 +19,7 @@ global_image_sequence_counter = 0
 # display_frame_queue = queue.Queue(maxsize=2) 
 
 
-
+##
 
 def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path = None, video=True, max_fps=6, stop_event=None,cam_index=1):
     
@@ -62,6 +62,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
         print(f"{model_name} model loading failed. Exiting capture_frames.")
         cap.release()
         return
+    print("model loaded")
 
     frame_count = 0
     person_class_id = None
@@ -96,6 +97,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
         # --- 객체 탐지 및 트래킹 ---
         results = model.track(
             frame, persist=True, tracker="bytetrack.yaml", verbose=False, classes=person_class_id, conf=0.5
+
         )
 
         annotated_frame = frame.copy() # 원본 프레임 복사
@@ -156,7 +158,7 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
                             image_filepath = os.path.join(tracked_images_folder, pic_name)
 
                             try:
-                                cv2.imwrite(image_filepath, object_crop, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+                                cv2.imwrite(image_filepath, object_crop, [int(cv2.IMWRITE_JPEG_QUALITY), 50])
                                 # cv2.imwrite(image_filepath, object_crop) # 파일 저장은 BGR로 해도 무방
                                 # print(f"Saved: {image_filepath}")
                             except Exception as e:
