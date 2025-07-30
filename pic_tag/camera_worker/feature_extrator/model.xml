@@ -1,0 +1,2574 @@
+<?xml version="1.0"?>
+<net name="main_graph" version="11">
+	<layers>
+		<layer id="0" name="input" type="Parameter" version="opset1">
+			<data shape="1,3,256,128" element_type="f32" />
+			<output>
+				<port id="0" precision="FP32" names="input">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>256</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="1" name="Constant_3584" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 1, 128" offset="0" size="512" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="2" name="onnx::Conv_232" type="Const" version="opset1">
+			<data element_type="f32" shape="16, 3, 3, 3" offset="512" size="1728" />
+			<output>
+				<port id="0" precision="FP32" names="onnx::Conv_232">
+					<dim>16</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="3" name="/backbone/backbone.0/conv/Conv/WithoutBiases" type="Convolution" version="opset1">
+			<data strides="2, 2" dilations="1, 1" pads_begin="1, 1" pads_end="1, 1" auto_pad="explicit" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>3</dim>
+					<dim>256</dim>
+					<dim>128</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>16</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>128</dim>
+					<dim>64</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="4" name="Reshape_40" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 16, 1, 1" offset="2240" size="64" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="5" name="/backbone/backbone.0/conv/Conv" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>128</dim>
+					<dim>64</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.0/conv/Conv_output_0">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>128</dim>
+					<dim>64</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="6" name="/backbone/backbone.0/act/Mul" type="Swish" version="opset4">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>128</dim>
+					<dim>64</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/backbone/backbone.0/act/Mul_output_0">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>128</dim>
+					<dim>64</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="7" name="onnx::Conv_235" type="Const" version="opset1">
+			<data element_type="f32" shape="32, 16, 3, 3" offset="2304" size="18432" />
+			<output>
+				<port id="0" precision="FP32" names="onnx::Conv_235">
+					<dim>32</dim>
+					<dim>16</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="8" name="/backbone/backbone.1/conv/Conv/WithoutBiases" type="Convolution" version="opset1">
+			<data strides="2, 2" dilations="1, 1" pads_begin="1, 1" pads_end="1, 1" auto_pad="explicit" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>128</dim>
+					<dim>64</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>32</dim>
+					<dim>16</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="9" name="Reshape_55" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 32, 1, 1" offset="20736" size="128" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="10" name="/backbone/backbone.1/conv/Conv" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.1/conv/Conv_output_0">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="11" name="/backbone/backbone.1/act/Mul" type="Swish" version="opset4">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/backbone/backbone.1/act/Mul_output_0">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="12" name="onnx::Conv_238" type="Const" version="opset1">
+			<data element_type="f32" shape="32, 32, 1, 1" offset="20864" size="4096" />
+			<output>
+				<port id="0" precision="FP32" names="onnx::Conv_238">
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="13" name="/backbone/backbone.2/cv1/conv/Conv/WithoutBiases" type="Convolution" version="opset1">
+			<data strides="1, 1" dilations="1, 1" pads_begin="0, 0" pads_end="0, 0" auto_pad="explicit" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="14" name="Reshape_70" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 32, 1, 1" offset="24960" size="128" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="15" name="/backbone/backbone.2/cv1/conv/Conv" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.2/cv1/conv/Conv_output_0">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="16" name="/backbone/backbone.2/cv1/act/Mul" type="Swish" version="opset4">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/backbone/backbone.2/cv1/act/Mul_output_0">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="17" name="/backbone/backbone.2/Constant_1" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25088" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/backbone/backbone.2/Constant_1_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="18" name="/backbone/backbone.2/Shape" type="ShapeOf" version="opset3">
+			<data output_type="i64" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="I64" names="/backbone/backbone.2/Shape_output_0">
+					<dim>4</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="19" name="/backbone/backbone.2/Constant" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/backbone/backbone.2/Constant_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="20" name="Constant_76" type="Const" version="opset1">
+			<data element_type="i64" shape="" offset="25088" size="8" />
+			<output>
+				<port id="0" precision="I64" />
+			</output>
+		</layer>
+		<layer id="21" name="/backbone/backbone.2/Gather" type="Gather" version="opset8">
+			<data batch_dims="0" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>4</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="2" precision="I64" />
+			</input>
+			<output>
+				<port id="3" precision="I64" names="/backbone/backbone.2/Gather_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="22" name="/backbone/backbone.2/Constant_2" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/backbone/backbone.2/Constant_2_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="23" name="/backbone/backbone.2/Add" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="I64" names="/backbone/backbone.2/Add_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="24" name="/backbone/backbone.2/Constant_3" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25104" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/backbone/backbone.2/Constant_3_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="25" name="/backbone/backbone.2/Div" type="Divide" version="opset1">
+			<data auto_broadcast="numpy" m_pythondiv="true" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="I64" names="/backbone/backbone.2/Div_output_0,/backbone/backbone.2/Mul_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="26" name="Broadcast_87" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="27" name="/backbone/backbone.2/Slice" type="Slice" version="opset8">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="2" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="3" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="4" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="5" precision="FP32" names="/backbone/backbone.2/Slice_output_0">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="28" name="/backbone/backbone.2/Constant_5" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25104" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/backbone/backbone.2/Constant_5_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="29" name="/backbone/backbone.2/Mul_1" type="Multiply" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="I64" names="/backbone/backbone.2/Mul_1_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="30" name="Broadcast_134" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="31" name="/backbone/backbone.2/Slice_1" type="Slice" version="opset8">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="2" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="3" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="4" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="5" precision="FP32" names="/backbone/backbone.2/Slice_1_output_0">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="32" name="onnx::Conv_241" type="Const" version="opset1">
+			<data element_type="f32" shape="8, 16, 3, 3" offset="25112" size="4608" />
+			<output>
+				<port id="0" precision="FP32" names="onnx::Conv_241">
+					<dim>8</dim>
+					<dim>16</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="33" name="/backbone/backbone.2/m.0/cv1/conv/Conv/WithoutBiases" type="Convolution" version="opset1">
+			<data strides="1, 1" dilations="1, 1" pads_begin="1, 1" pads_end="1, 1" auto_pad="explicit" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>8</dim>
+					<dim>16</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>8</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="34" name="Reshape_188" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 8, 1, 1" offset="29720" size="32" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>8</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="35" name="/backbone/backbone.2/m.0/cv1/conv/Conv" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>8</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>8</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.2/m.0/cv1/conv/Conv_output_0">
+					<dim>1</dim>
+					<dim>8</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="36" name="/backbone/backbone.2/m.0/cv1/act/Mul" type="Swish" version="opset4">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>8</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/backbone/backbone.2/m.0/cv1/act/Mul_output_0">
+					<dim>1</dim>
+					<dim>8</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="37" name="onnx::Conv_244" type="Const" version="opset1">
+			<data element_type="f32" shape="16, 8, 3, 3" offset="29752" size="4608" />
+			<output>
+				<port id="0" precision="FP32" names="onnx::Conv_244">
+					<dim>16</dim>
+					<dim>8</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="38" name="/backbone/backbone.2/m.0/cv2/conv/Conv/WithoutBiases" type="Convolution" version="opset1">
+			<data strides="1, 1" dilations="1, 1" pads_begin="1, 1" pads_end="1, 1" auto_pad="explicit" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>8</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>16</dim>
+					<dim>8</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="39" name="Reshape_203" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 16, 1, 1" offset="34360" size="64" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="40" name="/backbone/backbone.2/m.0/cv2/conv/Conv" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.2/m.0/cv2/conv/Conv_output_0">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="41" name="/backbone/backbone.2/m.0/cv2/act/Mul" type="Swish" version="opset4">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/backbone/backbone.2/m.0/cv2/act/Mul_output_0">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="42" name="/backbone/backbone.2/m.0/Add" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.2/m.0/Add_output_0">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="43" name="/backbone/backbone.2/Concat" type="Concat" version="opset1">
+			<data axis="1" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</input>
+			<output>
+				<port id="3" precision="FP32" names="/backbone/backbone.2/Concat_output_0">
+					<dim>1</dim>
+					<dim>48</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="44" name="onnx::Conv_247" type="Const" version="opset1">
+			<data element_type="f32" shape="64, 48, 1, 1" offset="34424" size="12288" />
+			<output>
+				<port id="0" precision="FP32" names="onnx::Conv_247">
+					<dim>64</dim>
+					<dim>48</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="45" name="/backbone/backbone.2/cv2/conv/Conv/WithoutBiases" type="Convolution" version="opset1">
+			<data strides="1, 1" dilations="1, 1" pads_begin="0, 0" pads_end="0, 0" auto_pad="explicit" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>48</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>64</dim>
+					<dim>48</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="46" name="Reshape_220" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 64, 1, 1" offset="46712" size="256" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="47" name="/backbone/backbone.2/cv2/conv/Conv" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.2/cv2/conv/Conv_output_0">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="48" name="/backbone/backbone.2/cv2/act/Mul" type="Swish" version="opset4">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/backbone/backbone.2/cv2/act/Mul_output_0">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="49" name="onnx::Conv_250" type="Const" version="opset1">
+			<data element_type="f32" shape="64, 64, 3, 3" offset="46968" size="147456" />
+			<output>
+				<port id="0" precision="FP32" names="onnx::Conv_250">
+					<dim>64</dim>
+					<dim>64</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="50" name="/backbone/backbone.3/conv/Conv/WithoutBiases" type="Convolution" version="opset1">
+			<data strides="2, 2" dilations="1, 1" pads_begin="1, 1" pads_end="1, 1" auto_pad="explicit" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>64</dim>
+					<dim>64</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="51" name="Reshape_235" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 64, 1, 1" offset="194424" size="256" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="52" name="/backbone/backbone.3/conv/Conv" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.3/conv/Conv_output_0">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="53" name="/backbone/backbone.3/act/Mul" type="Swish" version="opset4">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/backbone/backbone.3/act/Mul_output_0">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="54" name="onnx::Conv_253" type="Const" version="opset1">
+			<data element_type="f32" shape="64, 64, 1, 1" offset="194680" size="16384" />
+			<output>
+				<port id="0" precision="FP32" names="onnx::Conv_253">
+					<dim>64</dim>
+					<dim>64</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="55" name="/backbone/backbone.4/cv1/conv/Conv/WithoutBiases" type="Convolution" version="opset1">
+			<data strides="1, 1" dilations="1, 1" pads_begin="0, 0" pads_end="0, 0" auto_pad="explicit" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>64</dim>
+					<dim>64</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="56" name="Reshape_250" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 64, 1, 1" offset="211064" size="256" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="57" name="/backbone/backbone.4/cv1/conv/Conv" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.4/cv1/conv/Conv_output_0">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="58" name="/backbone/backbone.4/cv1/act/Mul" type="Swish" version="opset4">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/backbone/backbone.4/cv1/act/Mul_output_0">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="59" name="/backbone/backbone.4/Constant_1" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25088" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/backbone/backbone.4/Constant_1_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="60" name="/backbone/backbone.4/Shape" type="ShapeOf" version="opset3">
+			<data output_type="i64" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="I64" names="/backbone/backbone.4/Shape_output_0">
+					<dim>4</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="61" name="/backbone/backbone.4/Constant" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/backbone/backbone.4/Constant_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="62" name="Constant_256" type="Const" version="opset1">
+			<data element_type="i64" shape="" offset="25088" size="8" />
+			<output>
+				<port id="0" precision="I64" />
+			</output>
+		</layer>
+		<layer id="63" name="/backbone/backbone.4/Gather" type="Gather" version="opset8">
+			<data batch_dims="0" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>4</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="2" precision="I64" />
+			</input>
+			<output>
+				<port id="3" precision="I64" names="/backbone/backbone.4/Gather_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="64" name="/backbone/backbone.4/Constant_2" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/backbone/backbone.4/Constant_2_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="65" name="/backbone/backbone.4/Add" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="I64" names="/backbone/backbone.4/Add_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="66" name="/backbone/backbone.4/Constant_3" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25104" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/backbone/backbone.4/Constant_3_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="67" name="/backbone/backbone.4/Div" type="Divide" version="opset1">
+			<data auto_broadcast="numpy" m_pythondiv="true" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="I64" names="/backbone/backbone.4/Div_output_0,/backbone/backbone.4/Mul_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="68" name="Broadcast_267" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="69" name="/backbone/backbone.4/Slice" type="Slice" version="opset8">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="2" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="3" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="4" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="5" precision="FP32" names="/backbone/backbone.4/Slice_output_0">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="70" name="/backbone/backbone.4/Constant_5" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25104" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/backbone/backbone.4/Constant_5_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="71" name="/backbone/backbone.4/Mul_1" type="Multiply" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="I64" names="/backbone/backbone.4/Mul_1_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="72" name="Broadcast_314" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="73" name="/backbone/backbone.4/Slice_1" type="Slice" version="opset8">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>64</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="2" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="3" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="4" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="5" precision="FP32" names="/backbone/backbone.4/Slice_1_output_0">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="74" name="onnx::Conv_256" type="Const" version="opset1">
+			<data element_type="f32" shape="16, 32, 3, 3" offset="211320" size="18432" />
+			<output>
+				<port id="0" precision="FP32" names="onnx::Conv_256">
+					<dim>16</dim>
+					<dim>32</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="75" name="/backbone/backbone.4/m.0/cv1/conv/Conv/WithoutBiases" type="Convolution" version="opset1">
+			<data strides="1, 1" dilations="1, 1" pads_begin="1, 1" pads_end="1, 1" auto_pad="explicit" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>16</dim>
+					<dim>32</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="76" name="Reshape_368" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 16, 1, 1" offset="229752" size="64" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="77" name="/backbone/backbone.4/m.0/cv1/conv/Conv" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.4/m.0/cv1/conv/Conv_output_0">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="78" name="/backbone/backbone.4/m.0/cv1/act/Mul" type="Swish" version="opset4">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/backbone/backbone.4/m.0/cv1/act/Mul_output_0">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="79" name="onnx::Conv_259" type="Const" version="opset1">
+			<data element_type="f32" shape="32, 16, 3, 3" offset="229816" size="18432" />
+			<output>
+				<port id="0" precision="FP32" names="onnx::Conv_259">
+					<dim>32</dim>
+					<dim>16</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="80" name="/backbone/backbone.4/m.0/cv2/conv/Conv/WithoutBiases" type="Convolution" version="opset1">
+			<data strides="1, 1" dilations="1, 1" pads_begin="1, 1" pads_end="1, 1" auto_pad="explicit" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>16</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>32</dim>
+					<dim>16</dim>
+					<dim>3</dim>
+					<dim>3</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="81" name="Reshape_383" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 32, 1, 1" offset="248248" size="128" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="82" name="/backbone/backbone.4/m.0/cv2/conv/Conv" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.4/m.0/cv2/conv/Conv_output_0">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="83" name="/backbone/backbone.4/m.0/cv2/act/Mul" type="Swish" version="opset4">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/backbone/backbone.4/m.0/cv2/act/Mul_output_0">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="84" name="/backbone/backbone.4/m.0/Add" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.4/m.0/Add_output_0">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="85" name="/backbone/backbone.4/Concat" type="Concat" version="opset1">
+			<data axis="1" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>32</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</input>
+			<output>
+				<port id="3" precision="FP32" names="/backbone/backbone.4/Concat_output_0">
+					<dim>1</dim>
+					<dim>96</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="86" name="onnx::Conv_262" type="Const" version="opset1">
+			<data element_type="f32" shape="128, 96, 1, 1" offset="248376" size="49152" />
+			<output>
+				<port id="0" precision="FP32" names="onnx::Conv_262">
+					<dim>128</dim>
+					<dim>96</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="87" name="/backbone/backbone.4/cv2/conv/Conv/WithoutBiases" type="Convolution" version="opset1">
+			<data strides="1, 1" dilations="1, 1" pads_begin="0, 0" pads_end="0, 0" auto_pad="explicit" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>96</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>128</dim>
+					<dim>96</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="88" name="Reshape_400" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 128, 1, 1" offset="297528" size="512" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="89" name="/backbone/backbone.4/cv2/conv/Conv" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/backbone/backbone.4/cv2/conv/Conv_output_0">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="90" name="/backbone/backbone.4/cv2/act/Mul" type="Swish" version="opset4">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/backbone/backbone.4/cv2/act/Mul_output_0">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="91" name="Constant_3899" type="Const" version="opset1">
+			<data element_type="i64" shape="3" offset="298040" size="24" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>3</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="92" name="/Reshape" type="Reshape" version="opset1">
+			<data special_zero="true" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>32</dim>
+					<dim>16</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>3</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/Reshape_output_0">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>512</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="93" name="Transpose_3516" type="Const" version="opset1">
+			<data element_type="f32" shape="384, 128" offset="298064" size="196608" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>384</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="94" name="/attn/to_qkv/MatMul" type="MatMul" version="opset1">
+			<data transpose_a="true" transpose_b="true" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+					<dim>512</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>384</dim>
+					<dim>128</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/to_qkv/MatMul_output_0">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>384</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="95" name="/attn/Constant_1" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25088" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/attn/Constant_1_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="96" name="/attn/Shape" type="ShapeOf" version="opset3">
+			<data output_type="i64" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>384</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="I64" names="/attn/Shape_output_0">
+					<dim>3</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="97" name="/attn/Constant" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="494672" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/attn/Constant_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="98" name="Constant_423" type="Const" version="opset1">
+			<data element_type="i64" shape="" offset="25088" size="8" />
+			<output>
+				<port id="0" precision="I64" />
+			</output>
+		</layer>
+		<layer id="99" name="/attn/Gather" type="Gather" version="opset8">
+			<data batch_dims="0" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>3</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="2" precision="I64" />
+			</input>
+			<output>
+				<port id="3" precision="I64" names="/attn/Gather_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="100" name="/attn/Constant_2" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25104" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/attn/Constant_2_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="101" name="/attn/Add" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="I64" names="/attn/Add_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="102" name="/attn/Constant_3" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="494680" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/attn/Constant_3_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="103" name="/attn/Div" type="Divide" version="opset1">
+			<data auto_broadcast="numpy" m_pythondiv="true" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="I64" names="/attn/Div_output_0,/attn/Mul_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="104" name="Broadcast_434" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="105" name="/attn/Slice" type="Slice" version="opset8">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>384</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="2" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="3" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="4" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="5" precision="FP32" names="/attn/Slice_output_0">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="106" name="/attn/Constant_7" type="Const" version="opset1">
+			<data element_type="i64" shape="4" offset="494688" size="32" />
+			<output>
+				<port id="0" precision="I64" names="/attn/Constant_7_output_0">
+					<dim>4</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="107" name="/attn/Reshape" type="Reshape" version="opset1">
+			<data special_zero="true" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>128</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>4</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/Reshape_output_0">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>4</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="108" name="Constant_573" type="Const" version="opset1">
+			<data element_type="i64" shape="4" offset="494720" size="32" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>4</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="109" name="/attn/Transpose" type="Transpose" version="opset1">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>4</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>4</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/Transpose_output_0">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>512</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="110" name="/attn/Constant_5" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25104" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/attn/Constant_5_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="111" name="/attn/Mul_1" type="Multiply" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="I64" names="/attn/Mul_1_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="112" name="Broadcast_481" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="113" name="/attn/Slice_1" type="Slice" version="opset8">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>384</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="2" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="3" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="4" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="5" precision="FP32" names="/attn/Slice_1_output_0">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="114" name="/attn/Constant_8" type="Const" version="opset1">
+			<data element_type="i64" shape="4" offset="494688" size="32" />
+			<output>
+				<port id="0" precision="I64" names="/attn/Constant_8_output_0">
+					<dim>4</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="115" name="/attn/Reshape_1" type="Reshape" version="opset1">
+			<data special_zero="true" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>128</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>4</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/Reshape_1_output_0">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>4</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="116" name="Constant_581" type="Const" version="opset1">
+			<data element_type="i64" shape="4" offset="494752" size="32" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>4</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="117" name="/attn/Transpose_2" type="Transpose" version="opset1">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>4</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>4</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/Transpose_2_output_0">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>32</dim>
+					<dim>512</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="118" name="Constant_3583" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 1, 1, 1" offset="494784" size="4" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="119" name="Multiply_3536" type="Multiply" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>32</dim>
+					<dim>512</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>32</dim>
+					<dim>512</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="120" name="/attn/Mul_3" type="MatMul" version="opset1">
+			<data transpose_a="false" transpose_b="false" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>512</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>32</dim>
+					<dim>512</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/Mul_3_output_0">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>512</dim>
+					<dim>512</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="121" name="/attn/softmax/Softmax" type="SoftMax" version="opset8">
+			<data axis="3" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>512</dim>
+					<dim>512</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/attn/softmax/Softmax_output_0">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>512</dim>
+					<dim>512</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="122" name="/attn/Constant_6" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="494680" size="8" />
+			<output>
+				<port id="0" precision="I64" names="/attn/Constant_6_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="123" name="/attn/Mul_2" type="Multiply" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="I64" names="/attn/Mul_2_output_0">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="124" name="Broadcast_528" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="125" name="/attn/Slice_2" type="Slice" version="opset8">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>384</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="2" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="3" precision="I64">
+					<dim>1</dim>
+				</port>
+				<port id="4" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="5" precision="FP32" names="/attn/Slice_2_output_0">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="126" name="/attn/Constant_9" type="Const" version="opset1">
+			<data element_type="i64" shape="4" offset="494688" size="32" />
+			<output>
+				<port id="0" precision="I64" names="/attn/Constant_9_output_0">
+					<dim>4</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="127" name="/attn/Reshape_2" type="Reshape" version="opset1">
+			<data special_zero="true" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>128</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>4</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/Reshape_2_output_0">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>4</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="128" name="Constant_579" type="Const" version="opset1">
+			<data element_type="i64" shape="4" offset="494720" size="32" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>4</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="129" name="/attn/Transpose_1" type="Transpose" version="opset1">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>4</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>4</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/Transpose_1_output_0">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>512</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="130" name="/attn/MatMul_1" type="MatMul" version="opset1">
+			<data transpose_a="false" transpose_b="false" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>512</dim>
+					<dim>512</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>512</dim>
+					<dim>32</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/MatMul_1_output_0">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>512</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="131" name="Constant_588" type="Const" version="opset1">
+			<data element_type="i64" shape="4" offset="494720" size="32" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>4</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="132" name="/attn/Transpose_3" type="Transpose" version="opset1">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>4</dim>
+					<dim>512</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>4</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/Transpose_3_output_0">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>4</dim>
+					<dim>32</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="133" name="/attn/Constant_11" type="Const" version="opset1">
+			<data element_type="i64" shape="3" offset="494788" size="24" />
+			<output>
+				<port id="0" precision="I64" names="/attn/Constant_11_output_0">
+					<dim>3</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="134" name="/attn/Reshape_3" type="Reshape" version="opset1">
+			<data special_zero="true" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>4</dim>
+					<dim>32</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>3</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/Reshape_3_output_0">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="135" name="Transpose_3527" type="Const" version="opset1">
+			<data element_type="f32" shape="128, 128" offset="494812" size="65536" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>128</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="136" name="/attn/to_out/to_out.0/MatMul" type="MatMul" version="opset1">
+			<data transpose_a="false" transpose_b="true" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>128</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>128</dim>
+					<dim>128</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/to_out/to_out.0/MatMul_output_0">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="137" name="/attn/to_out/to_out.0/Add" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>128</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/attn/to_out/to_out.0/Add_output_0">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="138" name="Constant_594" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="139" name="/ReduceMean" type="ReduceMean" version="opset1">
+			<data keep_dims="false" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>512</dim>
+					<dim>128</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/ReduceMean_output_0">
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="140" name="embed.weight" type="Const" version="opset1">
+			<data element_type="f32" shape="128, 128" offset="560348" size="65536" />
+			<output>
+				<port id="0" precision="FP32" names="embed.weight">
+					<dim>128</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="141" name="/embed/Gemm/WithoutBiases" type="MatMul" version="opset1">
+			<data transpose_a="false" transpose_b="true" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>128</dim>
+					<dim>128</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="142" name="Constant_3585" type="Const" version="opset1">
+			<data element_type="f32" shape="1, 128" offset="625884" size="512" />
+			<output>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="143" name="/embed/Gemm" type="Add" version="opset1">
+			<data auto_broadcast="numpy" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/embed/Gemm_output_0">
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="144" name="Constant_602" type="Const" version="opset1">
+			<data element_type="i64" shape="1" offset="25096" size="8" />
+			<output>
+				<port id="0" precision="I64">
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="145" name="/ReduceL2" type="ReduceL2" version="opset4">
+			<data keep_dims="true" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+				<port id="1" precision="I64">
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="/ReduceL2_output_0">
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="146" name="/Clip" type="Clamp" version="opset1">
+			<data min="9.999999960041972e-13" max="3.4028234663852886e+38" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="1" precision="FP32" names="/Clip_output_0,/Expand_output_0">
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="147" name="output" type="Divide" version="opset1">
+			<data auto_broadcast="numpy" m_pythondiv="true" />
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+				<port id="1" precision="FP32">
+					<dim>1</dim>
+					<dim>1</dim>
+				</port>
+			</input>
+			<output>
+				<port id="2" precision="FP32" names="output">
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+			</output>
+		</layer>
+		<layer id="148" name="output/sink_port_0" type="Result" version="opset1">
+			<input>
+				<port id="0" precision="FP32">
+					<dim>1</dim>
+					<dim>128</dim>
+				</port>
+			</input>
+		</layer>
+	</layers>
+	<edges>
+		<edge from-layer="0" from-port="0" to-layer="3" to-port="0" />
+		<edge from-layer="1" from-port="0" to-layer="137" to-port="0" />
+		<edge from-layer="2" from-port="0" to-layer="3" to-port="1" />
+		<edge from-layer="3" from-port="2" to-layer="5" to-port="0" />
+		<edge from-layer="4" from-port="0" to-layer="5" to-port="1" />
+		<edge from-layer="5" from-port="2" to-layer="6" to-port="0" />
+		<edge from-layer="6" from-port="1" to-layer="8" to-port="0" />
+		<edge from-layer="7" from-port="0" to-layer="8" to-port="1" />
+		<edge from-layer="8" from-port="2" to-layer="10" to-port="0" />
+		<edge from-layer="9" from-port="0" to-layer="10" to-port="1" />
+		<edge from-layer="10" from-port="2" to-layer="11" to-port="0" />
+		<edge from-layer="11" from-port="1" to-layer="13" to-port="0" />
+		<edge from-layer="12" from-port="0" to-layer="13" to-port="1" />
+		<edge from-layer="13" from-port="2" to-layer="15" to-port="0" />
+		<edge from-layer="14" from-port="0" to-layer="15" to-port="1" />
+		<edge from-layer="15" from-port="2" to-layer="16" to-port="0" />
+		<edge from-layer="16" from-port="1" to-layer="18" to-port="0" />
+		<edge from-layer="16" from-port="1" to-layer="27" to-port="0" />
+		<edge from-layer="16" from-port="1" to-layer="31" to-port="0" />
+		<edge from-layer="17" from-port="0" to-layer="27" to-port="1" />
+		<edge from-layer="18" from-port="1" to-layer="21" to-port="0" />
+		<edge from-layer="19" from-port="0" to-layer="21" to-port="1" />
+		<edge from-layer="19" from-port="0" to-layer="27" to-port="4" />
+		<edge from-layer="19" from-port="0" to-layer="31" to-port="4" />
+		<edge from-layer="20" from-port="0" to-layer="21" to-port="2" />
+		<edge from-layer="21" from-port="3" to-layer="23" to-port="0" />
+		<edge from-layer="22" from-port="0" to-layer="23" to-port="1" />
+		<edge from-layer="23" from-port="2" to-layer="25" to-port="0" />
+		<edge from-layer="24" from-port="0" to-layer="25" to-port="1" />
+		<edge from-layer="25" from-port="2" to-layer="27" to-port="2" />
+		<edge from-layer="25" from-port="2" to-layer="29" to-port="0" />
+		<edge from-layer="25" from-port="2" to-layer="31" to-port="1" />
+		<edge from-layer="26" from-port="0" to-layer="27" to-port="3" />
+		<edge from-layer="27" from-port="5" to-layer="43" to-port="0" />
+		<edge from-layer="28" from-port="0" to-layer="29" to-port="1" />
+		<edge from-layer="29" from-port="2" to-layer="31" to-port="2" />
+		<edge from-layer="30" from-port="0" to-layer="31" to-port="3" />
+		<edge from-layer="31" from-port="5" to-layer="33" to-port="0" />
+		<edge from-layer="31" from-port="5" to-layer="43" to-port="1" />
+		<edge from-layer="31" from-port="5" to-layer="42" to-port="0" />
+		<edge from-layer="32" from-port="0" to-layer="33" to-port="1" />
+		<edge from-layer="33" from-port="2" to-layer="35" to-port="0" />
+		<edge from-layer="34" from-port="0" to-layer="35" to-port="1" />
+		<edge from-layer="35" from-port="2" to-layer="36" to-port="0" />
+		<edge from-layer="36" from-port="1" to-layer="38" to-port="0" />
+		<edge from-layer="37" from-port="0" to-layer="38" to-port="1" />
+		<edge from-layer="38" from-port="2" to-layer="40" to-port="0" />
+		<edge from-layer="39" from-port="0" to-layer="40" to-port="1" />
+		<edge from-layer="40" from-port="2" to-layer="41" to-port="0" />
+		<edge from-layer="41" from-port="1" to-layer="42" to-port="1" />
+		<edge from-layer="42" from-port="2" to-layer="43" to-port="2" />
+		<edge from-layer="43" from-port="3" to-layer="45" to-port="0" />
+		<edge from-layer="44" from-port="0" to-layer="45" to-port="1" />
+		<edge from-layer="45" from-port="2" to-layer="47" to-port="0" />
+		<edge from-layer="46" from-port="0" to-layer="47" to-port="1" />
+		<edge from-layer="47" from-port="2" to-layer="48" to-port="0" />
+		<edge from-layer="48" from-port="1" to-layer="50" to-port="0" />
+		<edge from-layer="49" from-port="0" to-layer="50" to-port="1" />
+		<edge from-layer="50" from-port="2" to-layer="52" to-port="0" />
+		<edge from-layer="51" from-port="0" to-layer="52" to-port="1" />
+		<edge from-layer="52" from-port="2" to-layer="53" to-port="0" />
+		<edge from-layer="53" from-port="1" to-layer="55" to-port="0" />
+		<edge from-layer="54" from-port="0" to-layer="55" to-port="1" />
+		<edge from-layer="55" from-port="2" to-layer="57" to-port="0" />
+		<edge from-layer="56" from-port="0" to-layer="57" to-port="1" />
+		<edge from-layer="57" from-port="2" to-layer="58" to-port="0" />
+		<edge from-layer="58" from-port="1" to-layer="60" to-port="0" />
+		<edge from-layer="58" from-port="1" to-layer="69" to-port="0" />
+		<edge from-layer="58" from-port="1" to-layer="73" to-port="0" />
+		<edge from-layer="59" from-port="0" to-layer="69" to-port="1" />
+		<edge from-layer="60" from-port="1" to-layer="63" to-port="0" />
+		<edge from-layer="61" from-port="0" to-layer="63" to-port="1" />
+		<edge from-layer="61" from-port="0" to-layer="69" to-port="4" />
+		<edge from-layer="61" from-port="0" to-layer="73" to-port="4" />
+		<edge from-layer="62" from-port="0" to-layer="63" to-port="2" />
+		<edge from-layer="63" from-port="3" to-layer="65" to-port="0" />
+		<edge from-layer="64" from-port="0" to-layer="65" to-port="1" />
+		<edge from-layer="65" from-port="2" to-layer="67" to-port="0" />
+		<edge from-layer="66" from-port="0" to-layer="67" to-port="1" />
+		<edge from-layer="67" from-port="2" to-layer="69" to-port="2" />
+		<edge from-layer="67" from-port="2" to-layer="73" to-port="1" />
+		<edge from-layer="67" from-port="2" to-layer="71" to-port="0" />
+		<edge from-layer="68" from-port="0" to-layer="69" to-port="3" />
+		<edge from-layer="69" from-port="5" to-layer="85" to-port="0" />
+		<edge from-layer="70" from-port="0" to-layer="71" to-port="1" />
+		<edge from-layer="71" from-port="2" to-layer="73" to-port="2" />
+		<edge from-layer="72" from-port="0" to-layer="73" to-port="3" />
+		<edge from-layer="73" from-port="5" to-layer="75" to-port="0" />
+		<edge from-layer="73" from-port="5" to-layer="84" to-port="0" />
+		<edge from-layer="73" from-port="5" to-layer="85" to-port="1" />
+		<edge from-layer="74" from-port="0" to-layer="75" to-port="1" />
+		<edge from-layer="75" from-port="2" to-layer="77" to-port="0" />
+		<edge from-layer="76" from-port="0" to-layer="77" to-port="1" />
+		<edge from-layer="77" from-port="2" to-layer="78" to-port="0" />
+		<edge from-layer="78" from-port="1" to-layer="80" to-port="0" />
+		<edge from-layer="79" from-port="0" to-layer="80" to-port="1" />
+		<edge from-layer="80" from-port="2" to-layer="82" to-port="0" />
+		<edge from-layer="81" from-port="0" to-layer="82" to-port="1" />
+		<edge from-layer="82" from-port="2" to-layer="83" to-port="0" />
+		<edge from-layer="83" from-port="1" to-layer="84" to-port="1" />
+		<edge from-layer="84" from-port="2" to-layer="85" to-port="2" />
+		<edge from-layer="85" from-port="3" to-layer="87" to-port="0" />
+		<edge from-layer="86" from-port="0" to-layer="87" to-port="1" />
+		<edge from-layer="87" from-port="2" to-layer="89" to-port="0" />
+		<edge from-layer="88" from-port="0" to-layer="89" to-port="1" />
+		<edge from-layer="89" from-port="2" to-layer="90" to-port="0" />
+		<edge from-layer="90" from-port="1" to-layer="92" to-port="0" />
+		<edge from-layer="91" from-port="0" to-layer="92" to-port="1" />
+		<edge from-layer="92" from-port="2" to-layer="94" to-port="0" />
+		<edge from-layer="93" from-port="0" to-layer="94" to-port="1" />
+		<edge from-layer="94" from-port="2" to-layer="96" to-port="0" />
+		<edge from-layer="94" from-port="2" to-layer="125" to-port="0" />
+		<edge from-layer="94" from-port="2" to-layer="113" to-port="0" />
+		<edge from-layer="94" from-port="2" to-layer="105" to-port="0" />
+		<edge from-layer="95" from-port="0" to-layer="105" to-port="1" />
+		<edge from-layer="96" from-port="1" to-layer="99" to-port="0" />
+		<edge from-layer="97" from-port="0" to-layer="99" to-port="1" />
+		<edge from-layer="97" from-port="0" to-layer="105" to-port="4" />
+		<edge from-layer="97" from-port="0" to-layer="113" to-port="4" />
+		<edge from-layer="97" from-port="0" to-layer="125" to-port="4" />
+		<edge from-layer="98" from-port="0" to-layer="99" to-port="2" />
+		<edge from-layer="99" from-port="3" to-layer="101" to-port="0" />
+		<edge from-layer="100" from-port="0" to-layer="101" to-port="1" />
+		<edge from-layer="101" from-port="2" to-layer="103" to-port="0" />
+		<edge from-layer="102" from-port="0" to-layer="103" to-port="1" />
+		<edge from-layer="103" from-port="2" to-layer="105" to-port="2" />
+		<edge from-layer="103" from-port="2" to-layer="111" to-port="0" />
+		<edge from-layer="103" from-port="2" to-layer="113" to-port="1" />
+		<edge from-layer="103" from-port="2" to-layer="123" to-port="0" />
+		<edge from-layer="104" from-port="0" to-layer="105" to-port="3" />
+		<edge from-layer="105" from-port="5" to-layer="107" to-port="0" />
+		<edge from-layer="106" from-port="0" to-layer="107" to-port="1" />
+		<edge from-layer="107" from-port="2" to-layer="109" to-port="0" />
+		<edge from-layer="108" from-port="0" to-layer="109" to-port="1" />
+		<edge from-layer="109" from-port="2" to-layer="120" to-port="0" />
+		<edge from-layer="110" from-port="0" to-layer="111" to-port="1" />
+		<edge from-layer="111" from-port="2" to-layer="113" to-port="2" />
+		<edge from-layer="111" from-port="2" to-layer="125" to-port="1" />
+		<edge from-layer="112" from-port="0" to-layer="113" to-port="3" />
+		<edge from-layer="113" from-port="5" to-layer="115" to-port="0" />
+		<edge from-layer="114" from-port="0" to-layer="115" to-port="1" />
+		<edge from-layer="115" from-port="2" to-layer="117" to-port="0" />
+		<edge from-layer="116" from-port="0" to-layer="117" to-port="1" />
+		<edge from-layer="117" from-port="2" to-layer="119" to-port="0" />
+		<edge from-layer="118" from-port="0" to-layer="119" to-port="1" />
+		<edge from-layer="119" from-port="2" to-layer="120" to-port="1" />
+		<edge from-layer="120" from-port="2" to-layer="121" to-port="0" />
+		<edge from-layer="121" from-port="1" to-layer="130" to-port="0" />
+		<edge from-layer="122" from-port="0" to-layer="123" to-port="1" />
+		<edge from-layer="123" from-port="2" to-layer="125" to-port="2" />
+		<edge from-layer="124" from-port="0" to-layer="125" to-port="3" />
+		<edge from-layer="125" from-port="5" to-layer="127" to-port="0" />
+		<edge from-layer="126" from-port="0" to-layer="127" to-port="1" />
+		<edge from-layer="127" from-port="2" to-layer="129" to-port="0" />
+		<edge from-layer="128" from-port="0" to-layer="129" to-port="1" />
+		<edge from-layer="129" from-port="2" to-layer="130" to-port="1" />
+		<edge from-layer="130" from-port="2" to-layer="132" to-port="0" />
+		<edge from-layer="131" from-port="0" to-layer="132" to-port="1" />
+		<edge from-layer="132" from-port="2" to-layer="134" to-port="0" />
+		<edge from-layer="133" from-port="0" to-layer="134" to-port="1" />
+		<edge from-layer="134" from-port="2" to-layer="136" to-port="0" />
+		<edge from-layer="135" from-port="0" to-layer="136" to-port="1" />
+		<edge from-layer="136" from-port="2" to-layer="137" to-port="1" />
+		<edge from-layer="137" from-port="2" to-layer="139" to-port="0" />
+		<edge from-layer="138" from-port="0" to-layer="139" to-port="1" />
+		<edge from-layer="139" from-port="2" to-layer="141" to-port="0" />
+		<edge from-layer="140" from-port="0" to-layer="141" to-port="1" />
+		<edge from-layer="141" from-port="2" to-layer="143" to-port="0" />
+		<edge from-layer="142" from-port="0" to-layer="143" to-port="1" />
+		<edge from-layer="143" from-port="2" to-layer="145" to-port="0" />
+		<edge from-layer="143" from-port="2" to-layer="147" to-port="0" />
+		<edge from-layer="144" from-port="0" to-layer="145" to-port="1" />
+		<edge from-layer="145" from-port="2" to-layer="146" to-port="0" />
+		<edge from-layer="146" from-port="1" to-layer="147" to-port="1" />
+		<edge from-layer="147" from-port="2" to-layer="148" to-port="0" />
+	</edges>
+	<rt_info>
+		<Runtime_version value="2024.6.0-17404-4c0f47d2335-releases/2024/6" />
+		<conversion_parameters>
+			<is_python_object value="False" />
+		</conversion_parameters>
+	</rt_info>
+</net>
