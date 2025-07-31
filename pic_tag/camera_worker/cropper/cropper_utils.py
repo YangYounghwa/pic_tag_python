@@ -2,7 +2,18 @@ import os
 from ultralytics import YOLO
 import cv2
 
-
+def auto_model_download(model_name):
+    if not os.path.exists(model_name):
+        try:
+            model = YOLO(model_name)
+            print(f"Model '{model_name}' downloaded successfully.")
+            return model
+        except Exception as e:
+            print(f"Error downloading model '{model_name}': {e}")
+            return None
+    else:
+        print(f"Model '{model_name}' already exists.")
+        return YOLO(model_name)
 
 def model_load(model_name):
     try:
