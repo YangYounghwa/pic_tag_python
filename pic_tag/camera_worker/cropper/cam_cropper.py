@@ -5,7 +5,7 @@ from ultralytics import YOLO
 import datetime
 import queue
 import threading
-from .cropper_utils import make_folder, model_load, draw_bounding_box
+from .cropper_utils import make_folder, model_load, draw_bounding_box, auto_model_download
 
 from pathlib import Path
 
@@ -38,6 +38,21 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
     make_folder(main_data_folder_path)
     make_folder(sub_data_folder_path)
 
+    # --- 모델 다운로드 및 로드 ---
+    model_name = "yolov8n.pt"  # 예시 모델 이름,
+    model = auto_model_download(model_name)
+    if model is None:
+        print(f"{model_name} model download failed. Exiting capture_frames.")
+        return
+    print("Model downloaded successfully.")
+
+    # --- 모델 로드 ---
+    model = model_load(model_name)
+    if model is None:
+        print(f"{model_name} model loading failed. Exiting capture_frames.")
+        return
+    print("Model loaded successfully.")
+
     cap = cv2.VideoCapture(cam_num)
 
     if not cap.isOpened():
@@ -53,13 +68,13 @@ def capture_frames(cam_num, person_data_queue_instance, destination_folder: Path
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     print(f"Webcam opened with resolution: {width}x{height} at {fps} FPS.")
 
-    model_name = "yolov8n.pt"
-    model = model_load(model_name)
-    if model is None:
-        print(f"{model_name} model loading failed. Exiting capture_frames.")
-        cap.release()
-        return
-    print("model loaded")
+    # model_name = "yolov8n.pt"
+    # model = model_load(model_name)
+    # if model is None:
+    #     print(f"{model_name} model loading failed. Exiting capture_frames.")
+    #     cap.release()
+    #     return
+    # print("model loaded")
 
     frame_count = 0
     person_class_id = None
